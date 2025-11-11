@@ -1,0 +1,9 @@
+## Interface: 30300
+## Title: Redeemer
+## Notes: Resurrection messages. /redeemer
+## Version: 1.0
+## Dependencies:
+## SavedVariablesPerCharacter: RedeemerDisplaySay, RedeemerDisplayParty, RedeemerDisplayRaid, RedeemerDisplayWhisper
+RedeemerQuotes.lua
+Redeemer.lua
+Redeemer.xml
