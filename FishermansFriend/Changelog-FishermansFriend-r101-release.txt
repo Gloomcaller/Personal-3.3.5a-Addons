@@ -1,0 +1,31 @@
+------------------------------------------------------------------------
+r102 | ammo | 2009-09-25 09:43:53 +0000 (Fri, 25 Sep 2009) | 1 line
+Changed paths:
+   A /tags/r101-release (from /trunk:101)
+
+Tagging as r101-release
+------------------------------------------------------------------------
+r101 | ammo | 2009-09-25 09:18:54 +0000 (Fri, 25 Sep 2009) | 1 line
+Changed paths:
+   M /trunk/FishermansFriend.lua
+
+player_auras_changed -> unit_aura
+------------------------------------------------------------------------
+r100 | ammo | 2009-09-25 09:15:22 +0000 (Fri, 25 Sep 2009) | 1 line
+Changed paths:
+   M /trunk/FishermansFriend.lua
+
+omg bears can't fish?
+------------------------------------------------------------------------
+r98 | ammo | 2009-09-25 07:32:44 +0000 (Fri, 25 Sep 2009) | 1 line
+Changed paths:
+   M /trunk/FishermansFriend.lua
+
+check upon equipment swap as well. patch by Fonex
+------------------------------------------------------------------------
+r96 | ammo | 2009-09-23 07:21:33 +0000 (Wed, 23 Sep 2009) | 1 line
+Changed paths:
+   M /trunk/FishermansFriend.lua
+
+temporarily fix errors by ignoring MapWaterSounds cvar until I can fix it proper
+------------------------------------------------------------------------

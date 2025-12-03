@@ -1,0 +1,35 @@
+﻿## Interface: 30200
+## X-Curse-Packaged-Version: r101-release
+## X-Curse-Project-Name: FishermansFriend
+## X-Curse-Project-ID: fishermans-friend
+## X-Curse-Repository-ID: wow/fishermans-friend/mainline
+
+## Title: Fishermans Friend
+## Notes: Doublerightclick casting, autolure and sound enhancing
+## Author: Ammo
+
+## X-Credits: Based upon FishingAce
+
+## OptionalDeps: Ace3
+## SavedVariables: FishermansFriendDB
+## X-CompatibleLocales: enUS, deDE, koKR, zhCN, zhTW, ruRU
+
+## LoadManagers: AddonLoader
+## X-LoadOn-Events: UNIT_INVENTORY_CHANGED, PLAYER_ENTERING_WORLD
+## X-LoadOn-UNIT_INVENTORY_CHANGED: if arg1 == 'player' and IsUsableSpell((GetSpellInfo(7620))) then AddonLoader:LoadAddOn('FishermansFriend') end
+## X-LoadOn-PLAYER_ENTERING_WORLD: if IsUsableSpell((GetSpellInfo(7620))) then AddonLoader:LoadAddOn('FishermansFriend') end
+## X-LoadOn-Slash: /fmf, /fishermansfriend
+## X-LoadOn-InterfaceOptions: Fishermans Friend
+
+#@no-lib-strip@
+libs.xml
+#@end-no-lib-strip@
+
+locales\enUS.lua
+locales\ruRU.lua
+locales\deDE.lua
+locales\koKR.lua
+locales\zhCN.lua
+locales\zhTW.lua
+
+FishermansFriend.lua
