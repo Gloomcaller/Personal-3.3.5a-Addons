@@ -34,27 +34,27 @@ A curated collection of World of Warcraft: Wrath of the Lich King (3.3.5a) addon
 
 | Addon | Description | Official Source |
 |-------|-------------|-----------------|
-| **ACP** (Addon Control Panel) | Manage addons without relogging | [CurseForge](https://www.curseforge.com/wow/addons/acp) / [Felbite](https://felbite.com/wotlk-addon/acp) |
-| **AckisRecipeList** | Tracks missing recipes | [CurseForge](https://www.curseforge.com/wow/addons/ackis-recipe-list) / [Felbite](https://felbite.com/wotlk-addon/ackis-recipe-list) |
-| **AdvancedTradeSkillWindow** | Enhanced profession window | [CurseForge](https://www.curseforge.com/wow/addons/advanced-tradeskill-window) / [Felbite](https://felbite.com/wotlk-addon/advanced-tradeskill-window) |
-| **AllStats** | Detailed character statistics | [CurseForge](https://www.curseforge.com/wow/addons/allstats) / [Felbite](https://felbite.com/wotlk-addon/allstats) |
-| **Atlas** | Dungeon maps | [CurseForge](https://www.curseforge.com/wow/addons/atlas) / [Felbite](https://felbite.com/wotlk-addon/atlas) |
-| **AtlasLoot** | Loot tables | [CurseForge](https://www.curseforge.com/wow/addons/atlasloot-enhanced) / [Felbite](https://felbite.com/wotlk-addon/atlasloot-enhanced) |
-| **Auctionator** | Simplified auction house interface | [CurseForge](https://www.curseforge.com/wow/addons/auctionator) / [Felbite](https://felbite.com/wotlk-addon/auctionator) |
-| **Bagnon** | Unified bag and bank interface | [CurseForge](https://www.curseforge.com/wow/addons/bagnon) / [Felbite](https://felbite.com/wotlk-addon/bagnon) |
-| **BonusScanner** | Scans and sums item bonuses | [CurseForge](https://www.curseforge.com/wow/addons/bonusscanner) / [Felbite](https://felbite.com/wotlk-addon/bonusscanner) |
-| **Cromulent** | Item level and more | [CurseForge](https://www.curseforge.com/wow/addons/cromulent) / [Felbite](https://felbite.com/wotlk-addon/cromulent) |
-| **DBM (Deadly Boss Mods)** | Raid and dungeon boss timers | [Deadly Boss Mods](https://www.deadlybossmods.com/) / [Felbite](https://felbite.com/wotlk-addon/deadly-boss-mods) |
-| **FishermansFriend** | Fishing helper | [CurseForge](https://www.curseforge.com/wow/addons/fishermansfriend) / [Felbite](https://felbite.com/wotlk-addon/fishermansfriend) |
-| **GTFO** | Audio alerts for standing in bad stuff | [CurseForge](https://www.curseforge.com/wow/addons/gtfo) / [Felbite](https://felbite.com/wotlk-addon/gtfo) |
-| **GearScoreLite** | Lightweight gear scoring | [CurseForge](https://www.curseforge.com/wow/addons/gearscore) / [Felbite](https://felbite.com/wotlk-addon/gearscore) |
-| **Overachiever** | Achievement helper | [CurseForge](https://www.curseforge.com/wow/addons/overachiever) / [Felbite](https://felbite.com/wotlk-addon/overachiever) |
-| **Postal** | Enhanced mail management | [CurseForge](https://www.curseforge.com/wow/addons/postal) / [Felbite](https://felbite.com/wotlk-addon/postal) |
-| **Questie** | Quest helper and tracker | [Questie](https://github.com/Questie/Questie) / [Felbite](https://felbite.com/wotlk-addon/questie) |
-| **SilverDragon** | Rare mob scanner | [CurseForge](https://www.curseforge.com/wow/addons/silver-dragon) / [Felbite](https://felbite.com/wotlk-addon/silver-dragon) |
-| **Skada** | Damage/healing meter | [CurseForge](https://www.curseforge.com/wow/addons/skada) / [Felbite](https://felbite.com/wotlk-addon/skada) |
-| **Talented** | Talent tree editor | [CurseForge](https://www.curseforge.com/wow/addons/talented) / [Felbite](https://felbite.com/wotlk-addon/talented) |
-| **autorepair** | Auto-repair at vendors | [CurseForge](https://www.curseforge.com/wow/addons/auto-repair) / [Felbite](https://felbite.com/wotlk-addon/auto-repair) |
+| **ACP** (Addon Control Panel) | Manage addons without relogging | [CurseForge](https://www.curseforge.com/wow/addons/acp) / [Felbite](https://felbite.com/addon/4688-addoncontrolpanel/) |
+| **AckisRecipeList** | Tracks missing recipes | [CurseForge](https://www.curseforge.com/wow/addons/ackis-recipe-list) / [Felbite](https://felbite.com/addon/4885-ackisrecipelist/) |
+| **AdvancedTradeSkillWindow** | Enhanced profession window | [CurseForge](https://www.curseforge.com/wow/addons/advanced-tradeskill-window) / [Felbite](https://felbite.com/addon/4093-advancedtradeskillwindow/) |
+| **AllStats** | Detailed character statistics | [CurseForge](https://www.curseforge.com/wow/addons/allstats) / [Felbite](https://felbite.com/addon/3884-all-stats/) |
+| **Atlas** | Dungeon maps | [CurseForge](https://www.curseforge.com/wow/addons/atlas) |
+| **AtlasLoot** | Loot tables | [CurseForge](https://www.curseforge.com/wow/addons/atlasloot-enhanced) / [Felbite](https://felbite.com/addon/4873-atlaslootenhanced/) |
+| **Auctionator** | Simplified auction house interface | [CurseForge](https://www.curseforge.com/wow/addons/auctionator) / [Felbite](https://felbite.com/addon/4868-auctionator/) |
+| **Bagnon** | Unified bag and bank interface | [CurseForge](https://www.curseforge.com/wow/addons/bagnon) / [Felbite](https://felbite.com/addon/4857-bagnon/) |
+| **BonusScanner** | Scans and sums item bonuses | [CurseForge](https://www.curseforge.com/wow/addons/bonusscanner) / [Felbite](https://felbite.com/addon/3946-bonusscannercontinued/) |
+| **Cromulent** | Item level and more | [CurseForge](https://www.curseforge.com/wow/addons/cromulent) / [Felbite](https://felbite.com/addon/4119-cromulent/) |
+| **DBM (Deadly Boss Mods)** | Raid and dungeon boss timers | [Deadly Boss Mods](https://www.deadlybossmods.com/) / [Felbite](https://felbite.com/addon/4828-deadlybossmods/) |
+| **FishermansFriend** | Fishing helper | [CurseForge](https://www.curseforge.com/wow/addons/fishermansfriend) / [Felbite](https://felbite.com/addon/4083-fishermansfriend/) |
+| **GTFO** | Audio alerts for standing in bad stuff | [CurseForge](https://www.curseforge.com/wow/addons/gtfo) / [Felbite](https://felbite.com/addon/4340-gtfo/) |
+| **GearScoreLite** | Lightweight gear scoring | [CurseForge](https://www.curseforge.com/wow/addons/gearscore) / [Felbite](https://felbite.com/addon/4799-gearscorelite/) |
+| **Overachiever** | Achievement helper | [CurseForge](https://www.curseforge.com/wow/addons/overachiever) / [Felbite](https://felbite.com/addon/4269-overachiever/) |
+| **Postal** | Enhanced mail management | [CurseForge](https://www.curseforge.com/wow/addons/postal) / [Felbite](https://felbite.com/addon/4545-postal/) |
+| **Questie** | Quest helper and tracker | [Questie](https://github.com/Questie/Questie) / [Felbite](https://felbite.com/addon/3349-questie/) |
+| **SilverDragon** | Rare mob scanner | [CurseForge](https://www.curseforge.com/wow/addons/silver-dragon) / [Felbite](https://felbite.com/addon/4731-silverdragon/) |
+| **Skada** | Damage/healing meter | [CurseForge](https://www.curseforge.com/wow/addons/skada) / [Felbite](https://felbite.com/addon/4726-skada/) |
+| **Talented** | Talent tree editor | [CurseForge](https://www.curseforge.com/wow/addons/talented) / [Felbite](https://felbite.com/addon/4354-talented/) |
+| **autorepair** | Auto-repair at vendors | [CurseForge](https://www.curseforge.com/wow/addons/auto-repair) / [Felbite](https://felbite.com/addon/4230-autorepair/) |
 
 *Note: Some addons may have multiple modules included (like AtlasLoot modules and DBM modules).*
 
