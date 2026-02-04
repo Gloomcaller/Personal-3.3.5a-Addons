@@ -4,7 +4,6 @@ A curated collection of World of Warcraft: Wrath of the Lich King (3.3.5a) addon
 
 ## Installation
 
-### Quick Setup
 1. **Download the addons:**
    - Click the green `Code` button
    - Select `Download ZIP`
