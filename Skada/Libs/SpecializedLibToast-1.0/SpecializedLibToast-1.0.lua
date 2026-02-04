@@ -1,21 +1,20 @@
 -- LibToast-1.0 modified by Kader
 -- Specialized ( = enhanced) for Skada
 
-local MAJOR, MINOR = "SpecializedLibToast-1.0", 3
+local MAJOR, MINOR = "SpecializedLibToast-1.0", 1
 
 local LibStub = LibStub
 assert(LibStub, MAJOR .. " requires LibStub")
 
 local lib, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end -- No upgrade needed
-local folder = ...
 
 -----------------------------------------------------------------------
 -- Upvalued Lua API.
 -----------------------------------------------------------------------
 -- Functions
-local pairs, type, error = pairs, type, error
-local tremove, unpack = table.remove, unpack
+local pairs, unpack, error, type = pairs, unpack, error, type
+local tinsert, tremove = table.insert, table.remove
 local min, max = math.min, math.max
 local find, lower, format = string.find, string.lower, string.format
 local CreateFrame, UIFrameFade = CreateFrame, UIFrameFade
@@ -248,7 +247,7 @@ local function _reclaimButton(button)
 	button:ClearAllPoints()
 	button:SetParent(nil)
 	button:SetText(nil)
-	button_heap[#button_heap + 1] = button
+	tinsert(button_heap, button)
 end
 
 local function _reclaimToast(toast)
@@ -266,7 +265,7 @@ local function _reclaimToast(toast)
 	toast:Hide()
 
 	UIFrameFadeRemoveFrame(toast)
-	toast_heap[#toast_heap + 1] = toast
+	tinsert(toast_heap, toast)
 
 	local remove_index
 	for index = 1, #active_toasts do
@@ -365,9 +364,9 @@ local function _acquireToast()
 		dismiss_button:SetPoint("TOPRIGHT", toast, "TOPRIGHT", -4, -4)
 		dismiss_button:SetFrameStrata("DIALOG")
 		dismiss_button:SetFrameLevel(toast:GetFrameLevel() + 2)
-		dismiss_button:SetNormalTexture(format([[Interface\AddOns\%s\Libs\%s\closebutton-up]], folder, MAJOR))
-		dismiss_button:SetPushedTexture(format([[Interface\AddOns\%s\Libs\%s\closebutton-down]], folder, MAJOR))
-		dismiss_button:SetHighlightTexture(format([[Interface\AddOns\%s\Libs\%s\closebutton-highlight]], folder, MAJOR))
+		dismiss_button:SetNormalTexture([[Interface\AddOns\Skada\Libs\SpecializedLibToast-1.0\closebutton-up]])
+		dismiss_button:SetPushedTexture([[Interface\AddOns\Skada\Libs\SpecializedLibToast-1.0\closebutton-down]])
+		dismiss_button:SetHighlightTexture([[Interface\AddOns\Skada\Libs\SpecializedLibToast-1.0\closebutton-highlight]])
 		dismiss_button:Hide()
 		dismiss_button:SetScript("OnClick", _dismissToast)
 

@@ -1,195 +1,216 @@
 local LibFail = LibStub("LibFail-1.0", true)
 if not LibFail then return end
 
-local folder, Skada = ...
-local Private = Skada.Private
-Skada:RegisterModule("Fails", function(L, P, _, _, M, O)
-	local mode = Skada:NewModule("Fails")
-	local mode_spell = mode:NewModule("Spell List")
-	local mode_spell_target = mode_spell:NewModule("Target List")
-	local ignored_spells = Skada.ignored_spells.fail -- Edit Skada\Core\Tables.lua
-	local count_fails_by_spell = nil
+local Skada = Skada
+Skada:AddLoadableModule("Fails", function(L)
+	if Skada:IsDisabled("Fails") then return end
 
-	local pairs, tostring, format, UnitGUID = pairs, tostring, string.format, UnitGUID
-	local uformat, IsInGroup = Private.uformat, Skada.IsInGroup
-	local classfmt = Skada.classcolors.format
-	local tank_events, mode_cols
+	local mod = Skada:NewModule(L["Fails"])
+	local playermod = mod:NewModule(L["Player's failed events"])
+	local spellmod = mod:NewModule(L["Event's failed players"])
+	local ignoredSpells = Skada.dummyTable -- Edit Skada\Core\Tables.lua
 
-	local function format_valuetext(d, total, metadata, subview)
-		d.valuetext = Skada:FormatValueCols(
-			mode_cols.Count and d.value,
-			mode_cols[subview and "sPercent" or "Percent"] and Skada:FormatPercent(d.value, total)
-		)
+	local pairs, ipairs, tostring, format, tContains = pairs, ipairs, tostring, string.format, tContains
+	local GetSpellInfo, UnitGUID, IsInGroup = Skada.GetSpellInfo or GetSpellInfo, UnitGUID, Skada.IsInGroup
+	local _
 
-		if metadata and d.value > metadata.maxvalue then
-			metadata.maxvalue = d.value
+	local function log_fail(set, playerid, playername, spellid, event)
+		local player = Skada:FindPlayer(set, playerid, playername)
+		if player and (player.role ~= "TANK" or not tContains(LibFail:GetFailsWhereTanksDoNotFail(), event)) then
+			player.fail = (player.fail or 0) + 1
+			set.fail = (set.fail or 0) + 1
+
+			-- saving this to total set may become a memory hog deluxe.
+			if set ~= Skada.total then
+				player.failspells = player.failspells or {}
+				player.failspells[spellid] = (player.failspells[spellid] or 0) + 1
+			end
 		end
 	end
 
-	local actorflags = Private.DEFAULT_FLAGS
-	local function log_fail(set, actorname, actorid, spellid, failname)
-		local actor = Skada:GetActor(set, actorname, actorid, actorflags)
-		if not actor or (actor.role == "TANK" and tank_events[failname]) then return end
-
-		actor.fail = (actor.fail or 0) + 1
-		set.fail = (set.fail or 0) + 1
-
-		-- saving this to total set may become a memory hog deluxe.
-		if (set == Skada.total and not P.totalidc) or not spellid then return end
-		actor.failspells = actor.failspells or {}
-		actor.failspells[spellid] = (actor.failspells[spellid] or 0) + 1
+	local function onFail(event, who, failtype)
+		if who and event then
+			local spellid = LibFail:GetEventSpellId(event)
+			if spellid and not ignoredSpells[spellid] then
+				local unitGUID = UnitGUID(who)
+				if unitGUID then
+					Skada:DispatchSets(log_fail, unitGUID, who, spellid, event)
+					log_fail(Skada.total, unitGUID, who, spellid, event)
+				end
+			end
+		end
 	end
 
-	local function on_fail(failname, actorname, failtype, ...)
-		local spellid = failname and actorname and LibFail:GetEventSpellId(failname)
-		local actorid = spellid and not ignored_spells[spellid] and UnitGUID(actorname)
-		if not actorid then return end
-
-		Skada:DispatchSets(log_fail, actorname, actorid, tostring(spellid), failname)
-	end
-
-	function mode_spell_target:Enter(win, id, label)
+	function spellmod:Enter(win, id, label)
 		win.spellid, win.spellname = id, label
 		win.title = format(L["%s's fails"], label)
 	end
 
-	function mode_spell_target:Update(win, set)
-		win.title = uformat(L["%s's fails"], win.spellname)
+	function spellmod:Update(win, set)
+		win.title = format(L["%s's fails"], win.spellname or L.Unknown)
 		if not win.spellid then return end
 
-		local total = set and count_fails_by_spell(set, win.spellid)
-		if not total or total == 0 then
-			return
-		elseif win.metadata then
-			win.metadata.maxvalue = 0
-		end
+		local total = set and set:GetFailCount(win.spellid) or 0
+		if total > 0 then
+			if win.metadata then
+				win.metadata.maxvalue = 0
+			end
 
-		local nr = 0
-		local actors = set.actors
+			local nr = 0
+			for _, player in ipairs(set.players) do
+				if player.failspells and player.failspells[win.spellid] then
+					nr = nr + 1
+					local d = win:nr(nr)
 
-		for actorname, actor in pairs(actors) do
-			if actor.failspells and actor.failspells[win.spellid] then
-				nr = nr + 1
+					d.id = player.id or player.name
+					d.label = player.name
+					d.text = player.id and Skada:FormatName(player.name, player.id)
+					d.class = player.class
+					d.role = player.role
+					d.spec = player.spec
 
-				local d = win:actor(nr, actor, actor.enemy, actorname)
-				d.value = actor.failspells[win.spellid]
-				format_valuetext(d, total, win.metadata, true)
+					d.value = player.failspells[win.spellid]
+					d.valuetext = Skada:FormatValueCols(
+						mod.metadata.columns.Count and d.value,
+						mod.metadata.columns.Percent and Skada:FormatPercent(d.value, total)
+					)
+
+					if win.metadata and d.value > win.metadata.maxvalue then
+						win.metadata.maxvalue = d.value
+					end
+				end
 			end
 		end
 	end
 
-	function mode_spell:Enter(win, id, label, class)
-		win.actorid, win.actorname, win.actorclass = id, label, class
-		win.title = format(L["%s's fails"], classfmt(class, label))
+	function playermod:Enter(win, id, label)
+		win.actorid, win.actorname = id, label
+		win.title = format(L["%s's fails"], label)
 	end
 
-	function mode_spell:Update(win, set)
-		win.title = uformat(L["%s's fails"], classfmt(win.actorclass, win.actorname))
+	function playermod:Update(win, set)
+		win.title = format(L["%s's fails"], win.actorname or L.Unknown)
 
-		local actor = set and set:GetActor(win.actorname, win.actorid)
-		local total = actor and actor.fail
-		local spells = (total and total > 0) and actor.failspells
+		local player = set and set:GetPlayer(win.actorid, win.actorname)
+		local total = player and player.fail or 0
 
-		if not spells then
-			return
-		elseif win.metadata then
-			win.metadata.maxvalue = 0
-		end
+		if total > 0 and player.failspells then
+			if win.metadata then
+				win.metadata.maxvalue = 0
+			end
 
-		local nr = 0
-		for spellid, count in pairs(spells) do
-			nr = nr + 1
+			local nr = 0
+			for spellid, count in pairs(player.failspells) do
+				nr = nr + 1
+				local d = win:nr(nr)
 
-			local d = win:spell(nr, spellid)
-			d.value = count
-			format_valuetext(d, total, win.metadata, true)
+				d.id = spellid
+				d.spellid = spellid
+				d.label, _, d.icon = GetSpellInfo(spellid)
+
+				d.value = count
+				d.valuetext = Skada:FormatValueCols(
+					mod.metadata.columns.Count and d.value,
+					mod.metadata.columns.sPercent and Skada:FormatPercent(d.value, total)
+				)
+
+				if win.metadata and d.value > win.metadata.maxvalue then
+					win.metadata.maxvalue = d.value
+				end
+			end
 		end
 	end
 
-	function mode:Update(win, set)
+	function mod:Update(win, set)
 		win.title = win.class and format("%s (%s)", L["Fails"], L[win.class]) or L["Fails"]
 
-		local total = set and set:GetTotal(win.class, nil, "fail")
-		if not total or total == 0 then
-			return
-		elseif win.metadata then
-			win.metadata.maxvalue = 0
-		end
+		local total = set.fail or 0
+		if total > 0 then
+			if win.metadata then
+				win.metadata.maxvalue = 0
+			end
 
-		local nr = 0
-		local actors = set.actors
+			local nr = 0
+			for _, player in ipairs(set.players) do
+				if (not win.class or win.class == player.class) and (player.fail or 0) > 0 then
+					nr = nr + 1
+					local d = win:nr(nr)
 
-		for actorname, actor in pairs(actors) do
-			if win:show_actor(actor, set, true) and actor.fail then
-				nr = nr + 1
+					d.id = player.id or player.name
+					d.label = player.name
+					d.text = player.id and Skada:FormatName(player.name, player.id)
+					d.class = player.class
+					d.role = player.role
+					d.spec = player.spec
 
-				local d = win:actor(nr, actor, actor.enemy, actorname)
-				d.value = actor.fail
-				format_valuetext(d, total, win.metadata)
+					d.value = player.fail
+					d.valuetext = Skada:FormatValueCols(
+						self.metadata.columns.Count and d.value,
+						self.metadata.columns.Percent and Skada:FormatPercent(d.value, total)
+					)
+
+					if win.metadata and d.value > win.metadata.maxvalue then
+						win.metadata.maxvalue = d.value
+					end
+				end
 			end
 		end
 	end
 
-	function mode_spell:GetSetSummary(set, win)
-		local actor = set and win and set:GetActor(win.actorname, win.actorid)
-		return actor and actor.fail
-	end
-
-	function mode:GetSetSummary(set, win)
-		if not set then return end
-		return set:GetTotal(win and win.class, nil, "fail")
-	end
-
-	function mode:AddToTooltip(set, tooltip)
-		if set.fail and set.fail > 0 then
-			tooltip:AddDoubleLine(L["Fails"], set.fail, 1, 1, 1)
-		end
-	end
-
-	function mode:OnEnable()
-		mode_spell.metadata = {click1 = mode_spell_target}
+	function mod:OnEnable()
+		playermod.metadata = {click1 = spellmod}
 		self.metadata = {
 			showspots = true,
 			ordersort = true,
-			filterclass = true,
-			click1 = mode_spell,
+			click1 = playermod,
+			click4 = Skada.FilterClass,
+			click4_label = L["Toggle Class Filter"],
+			nototalclick = {playermod},
 			columns = {Count = true, Percent = false, sPercent = false},
-			icon = [[Interface\ICONS\ability_creature_cursed_01]]
+			icon = [[Interface\Icons\ability_creature_cursed_01]]
 		}
 
-		mode_cols = self.metadata.columns
-
-		-- no total click.
-		mode_spell.nototal = true
-
-		Skada.RegisterMessage(self, "COMBAT_PLAYER_LEAVE", "CombatLeave")
 		Skada:AddMode(self)
+
+		-- table of ignored spells:
+		if Skada.ignoredSpells and Skada.ignoredSpells.fails then
+			ignoredSpells = Skada.ignoredSpells.fails
+		end
 	end
 
-	function mode:OnDisable()
-		Skada.UnregisterAllMessages(self)
+	function mod:OnDisable()
 		Skada:RemoveMode(self)
+	end
+
+	function mod:GetSetSummary(set)
+		return tostring(set.fail or 0), set.fail or 0
+	end
+
+	function mod:AddToTooltip(set, tooltip)
+		if set and (set.fail or 0) > 0 then
+			tooltip:AddDoubleLine(L["Fails"], set.fail, 1, 1, 1)
+		end
 	end
 
 	--------------------------------------------------------------------------
 
 	do
 		local options  -- holds the options table
-		local function get_options()
+		local function GetOptions()
 			if not options then
 				options = {
 					type = "group",
-					name = mode.localeName,
-					desc = format(L["Options for %s."], mode.localeName),
+					name = mod.moduleName,
+					desc = format(L["Options for %s."], mod.moduleName),
 					args = {
 						header = {
 							type = "description",
-							name = mode.localeName,
+							name = mod.moduleName,
 							fontSize = "large",
-							image = [[Interface\ICONS\ability_creature_cursed_01]],
+							image = [[Interface\Icons\ability_creature_cursed_01]],
 							imageWidth = 18,
 							imageHeight = 18,
-							imageCoords = Skada.cropTable,
+							imageCoords = {0.05, 0.95, 0.05, 0.95},
 							width = "full",
 							order = 0
 						},
@@ -210,7 +231,7 @@ Skada:RegisterModule("Fails", function(L, P, _, _, M, O)
 						failschannel = {
 							type = "select",
 							name = L["Channel"],
-							values = {AUTO = L["Instance"], GUILD = L["Guild"], OFFICER = L["Officer"], SELF = L["Self"]},
+							values = {AUTO = INSTANCE, GUILD = GUILD, OFFICER = CHAT_MSG_OFFICER, SELF = L["Self"]},
 							order = 20,
 							width = "double"
 						}
@@ -220,47 +241,43 @@ Skada:RegisterModule("Fails", function(L, P, _, _, M, O)
 			return options
 		end
 
-		function mode:OnInitialize()
-			local events = LibFail:GetSupportedEvents()
-			for i = 1, #events do
-				LibFail.RegisterCallback(folder, events[i], on_fail)
+		function mod:OnInitialize()
+			for _, event in ipairs(LibFail:GetSupportedEvents()) do
+				LibFail:RegisterCallback(event, onFail)
 			end
 
-			events = LibFail:GetFailsWhereTanksDoNotFail()
-			tank_events = tank_events or {}
-			for i = 1, #events do
-				tank_events[events[i]] = true
+			if Skada.db.profile.modules.failschannel == nil then
+				Skada.db.profile.modules.failschannel = "AUTO"
+			end
+			if Skada.db.profile.modules.ignoredfails then
+				Skada.db.profile.modules.ignoredfails = nil
 			end
 
-			M.ignoredfails = nil
-			M.failschannel = M.failschannel or "AUTO"
-			O.modules.args.failbot = get_options()
+			Skada.options.args.modules.args.failbot = GetOptions()
 		end
 	end
 
-	function mode:CombatLeave(_, set)
-		if set and set.fail and set.fail > 0 and M.failsannounce then
-			local channel = M.failschannel or "AUTO"
+	function mod:SetComplete(set)
+		if (set.fail or 0) > 0 and Skada.db.profile.modules.failsannounce then
+			local channel = Skada.db.profile.modules.failschannel or "AUTO"
 			if channel == "SELF" or channel == "GUILD" or IsInGroup() then
 				Skada:Report(channel, "preset", L["Fails"], nil, 10)
 			end
 		end
 	end
 
-	---------------------------------------------------------------------------
-
-	count_fails_by_spell = function(self, spellid)
-		local total = 0
-		if not self.fail or not spellid then
-			return total
-		end
-
-		local actors = self.actors
-		for _, a in pairs(actors) do
-			if a.failspells and a.failspells[spellid] then
-				total = total + a.failspells[spellid]
+	do
+		local setPrototype = Skada.setPrototype
+		function setPrototype:GetFailCount(spellid)
+			if spellid and self.fail then
+				local count = 0
+				for _, p in ipairs(self.players) do
+					if p.failspells and p.failspells[spellid] then
+						count = count + p.failspells[spellid]
+					end
+				end
+				return count
 			end
 		end
-		return total
 	end
 end)

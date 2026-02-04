@@ -1,176 +1,185 @@
-local _, Skada = ...
-local Private = Skada.Private
-Skada:RegisterModule("Parry-Haste", function(L, P, _, _, M, O)
-	local mode = Skada:NewModule("Parry-Haste")
-	local mode_target = mode:NewModule("Target List")
-	local pairs, format, uformat = pairs, string.format, Private.uformat
-	local classfmt = Skada.classcolors.format
-	local mode_cols = nil
+local Skada = Skada
+Skada:AddLoadableModule("Parry-Haste", function(L)
+	if Skada:IsDisabled("Parry-Haste") then return end
+
+	local mod = Skada:NewModule(L["Parry-Haste"])
+	local targetmod = mod:NewModule(L["Parry target list"])
+
+	local pairs, ipairs, tostring, format = pairs, ipairs, tostring, string.format
 
 	local parrybosses = {
-		[10184] = true, -- Onyxia
-		[34797] = true, -- Icehowl
-		[34799] = true, -- Dreadscale
-		[35144] = true, -- Acidmaw
-		[36853] = true, -- Sindragosa
-		[36855] = true, -- Lady Deathwhisper
-		[39863] = true, -- Halion
-		-- UNCONFIRMED BOSSES - by shoggoth#9796
-		[15932] = true, -- Gluth
-		[15989] = true, -- Sapphiron
-		[15990] = true, -- Kel'Thuzad
-		[33271] = true, -- General Vezax
+		[L["Acidmaw"]] = true,
+		[L["Dreadscale"]] = true,
+		[L["Icehowl"]] = true,
+		[L["Onyxia"]] = true,
+		[L["Lady Deathwhisper"]] = true,
+		[L["Sindragosa"]] = true,
+		[L["Halion"]] = true,
+		-- UNCONFIRMED BOSSES
+		-- Suggested by shoggoth#9796
+		[L["General Vezax"]] = true,
+		[L["Gluth"]] = true,
+		[L["Kel'Thuzad"]] = true,
+		[L["Sapphiron"]] = true,
 	}
 
-	local function format_valuetext(d, total, metadata, subview)
-		d.valuetext = Skada:FormatValueCols(
-			mode_cols.Count and d.value,
-			mode_cols[subview and "sPercent" or "Percent"] and Skada:FormatPercent(d.value, total)
-		)
+	local function log_parry(set, data)
+		local player = Skada:GetPlayer(set, data.playerid, data.playername, data.playerflags)
+		if player then
+			player.parry = (player.parry or 0) + 1
+			set.parry = (set.parry or 0) + 1
 
-		if metadata and d.value > metadata.maxvalue then
-			metadata.maxvalue = d.value
-		end
-	end
+			-- saving this to total set may become a memory hog deluxe.
+			if set ~= Skada.total then
+				player.parrytargets = player.parrytargets or {}
+				player.parrytargets[data.dstName] = (player.parrytargets[data.dstName] or 0) + 1
 
-	local function log_parry(set, actorname, actorid, actorflags, dstName)
-		local actor = Skada:GetActor(set, actorname, actorid, actorflags)
-		if not actor then return end
-
-		actor.parry = (actor.parry or 0) + 1
-		set.parry = (set.parry or 0) + 1
-
-		-- saving this to total set may become a memory hog deluxe.
-		if (set == Skada.total and not P.totalidc) or not dstName then return end
-
-		actor.parrytargets = actor.parrytargets or {}
-		actor.parrytargets[dstName] = (actor.parrytargets[dstName] or 0) + 1
-
-		if M.parryannounce and set ~= Skada.total then
-			Skada:SendChat(format(L["%s parried %s (%s)"], dstName, actorname, actor.parrytargets[dstName] or 1), M.parrychannel, "preset")
-		end
-	end
-
-	local GetCreatureId = Skada.GetCreatureId
-	local function is_parry_boss(name, guid)
-		if parrybosses[name] or parrybosses[GetCreatureId(guid)] then
-			parrybosses[name] = parrybosses[name] or true -- cache it
-			return true
-		end
-		return false
-	end
-
-	local function spell_missed(t)
-		if t.misstype == "PARRY" and t.dstName and is_parry_boss(t.dstName, t.dstGUID) then
-			local actorid, actorname, actorflags = Skada:FixMyPets(t.srcGUID, t.srcName, t.srcFlags)
-			Skada:DispatchSets(log_parry, actorname, actorid, actorflags, t.dstName)
-		end
-	end
-
-	function mode_target:Enter(win, id, label, class)
-		win.actorid, win.actorname, win.actorclass = id, label, class
-		win.title = format(L["%s's targets"], classfmt(class, label))
-	end
-
-	function mode_target:Update(win, set)
-		win.title = uformat(L["%s's targets"], classfmt(win.actorclass, win.actorname))
-		if not set or not win.actorname then return end
-
-		local actor = set:GetActor(win.actorname, win.actorid)
-		local total = (actor and not actor.enemy) and actor.parry
-		local targets = (total and total > 0) and actor.parrytargets
-
-		if not targets then
-			return
-		elseif win.metadata then
-			win.metadata.maxvalue = 0
-		end
-
-		local nr = 0
-		for targetname, count in pairs(targets) do
-			nr = nr + 1
-
-			local d = win:actor(nr, targetname)
-			d.class = "BOSS" -- what else can it be?
-			d.value = count
-			format_valuetext(d, total, win.metadata, true)
-		end
-	end
-
-	function mode:Update(win, set)
-		win.title = win.class and format("%s (%s)", L["Parry-Haste"], L[win.class]) or L["Parry-Haste"]
-
-		local total = set and set:GetTotal(win.class, nil, "parry")
-		if not total or total == 0 then
-			return
-		elseif win.metadata then
-			win.metadata.maxvalue = 0
-		end
-
-		local nr = 0
-		local actors = set.actors
-
-		for actorname, actor in pairs(actors) do
-			if win:show_actor(actor, set, true) and actor.parry then
-				nr = nr + 1
-
-				local d = win:actor(nr, actor, actor.enemy, actorname)
-				d.value = actor.parry
-				format_valuetext(d, total, win.metadata)
+				if Skada.db.profile.modules.parryannounce then
+					Skada:SendChat(format(L["%s parried %s (%s)"], data.dstName, data.playername, player.parrytargets[data.dstName] or 1), Skada.db.profile.modules.parrychannel, "preset", true)
+				end
 			end
 		end
 	end
 
-	function mode:GetSetSummary(set, win)
-		if not set then return end
-		return set:GetTotal(win and win.class, nil, "parry") or 0
+	local data = {}
+
+	local function SpellMissed(ts, event, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, _, _, _, misstype)
+		if parrybosses[dstName] and srcGUID ~= dstGUID and misstype == "PARRY" then
+			srcGUID, srcName = Skada:FixMyPets(srcGUID, srcName, srcFlags)
+
+			data.playerid = srcGUID
+			data.playername = srcName
+			data.playerflags = srcFlags
+			data.dstName = dstName
+
+			Skada:DispatchSets(log_parry, data)
+			log_parry(Skada.total, data)
+		end
 	end
 
-	function mode:OnEnable()
+	local function SwingMissed(ts, event, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, ...)
+		SpellMissed(ts, event, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, nil, nil, nil, ...)
+	end
+
+	function targetmod:Enter(win, id, label)
+		win.actorid, win.actorname = id, label
+		win.title = format(L["%s's parry targets"], label)
+	end
+
+	function targetmod:Update(win, set)
+		win.title = format(L["%s's parry targets"], win.actorname or L.Unknown)
+		if not set or not win.actorname then return end
+
+		local actor, enemy = set:GetActor(win.actorname, win.actorid)
+		if enemy then return end -- unavailable for enemies yet
+
+		local total = actor and actor.parry or 0
+		if total > 0 and actor.parrytargets then
+			if win.metadata then
+				win.metadata.maxvalue = 0
+			end
+
+			local nr = 0
+			for targetname, count in pairs(actor.parrytargets) do
+				nr = nr + 1
+				local d = win:nr(nr)
+
+				d.id = targetname
+				d.label = targetname
+				d.class = "BOSS" -- what else can it be?
+
+				d.value = count
+				d.valuetext = Skada:FormatValueCols(
+					mod.metadata.columns.Count and d.value,
+					mod.metadata.columns.Percent and Skada:FormatPercent(d.value, total)
+				)
+
+				if win.metadata and d.value > win.metadata.maxvalue then
+					win.metadata.maxvalue = d.value
+				end
+			end
+		end
+	end
+
+	function mod:Update(win, set)
+		win.title = win.class and format("%s (%s)", L["Parry-Haste"], L[win.class]) or L["Parry-Haste"]
+
+		local total = set.parry or 0
+		if total > 0 then
+			if win.metadata then
+				win.metadata.maxvalue = 0
+			end
+
+			local nr = 0
+			for _, player in ipairs(set.players) do
+				if (not win.class or win.class == player.class) and (player.parry or 0) > 0 then
+					nr = nr + 1
+					local d = win:nr(nr)
+
+					d.id = player.id or player.name
+					d.label = player.name
+					d.text = player.id and Skada:FormatName(player.name, player.id)
+					d.class = player.class
+					d.role = player.role
+					d.spec = player.spec
+
+					d.value = player.parry
+					d.valuetext = Skada:FormatValueCols(
+						self.metadata.columns.Count and d.value,
+						self.metadata.columns.Percent and Skada:FormatPercent(d.value, total)
+					)
+
+					if win.metadata and d.value > win.metadata.maxvalue then
+						win.metadata.maxvalue = d.value
+					end
+				end
+			end
+		end
+	end
+
+	function mod:OnEnable()
 		self.metadata = {
 			showspots = true,
 			ordersort = true,
-			filterclass = true,
-			click1 = mode_target,
-			columns = {Count = true, Percent = false, sPercent = false},
-			icon = [[Interface\ICONS\ability_parry]]
+			click1 = targetmod,
+			click4 = Skada.FilterClass,
+			click4_label = L["Toggle Class Filter"],
+			nototalclick = {targetmod},
+			columns = {Count = true, Percent = false},
+			icon = [[Interface\Icons\ability_parry]]
 		}
 
-		mode_cols = self.metadata.columns
-
-		-- no total click.
-		mode_target.nototal = true
-
-		Skada:RegisterForCL(
-			spell_missed,
-			{src_is_interesting = true, dst_is_not_interesting = true},
-			"SPELL_MISSED",
-			"SWING_MISSED"
-		)
+		Skada:RegisterForCL(SpellMissed, "SPELL_MISSED", {src_is_interesting = true, dst_is_not_interesting = true})
+		Skada:RegisterForCL(SwingMissed, "SWING_MISSED", {src_is_interesting = true, dst_is_not_interesting = true})
 
 		Skada:AddMode(self)
 	end
 
-	function mode:OnDisable()
+	function mod:OnDisable()
 		Skada:RemoveMode(self)
 	end
 
-	function mode:OnInitialize()
-		M.parrychannel = M.parrychannel or "AUTO"
+	function mod:GetSetSummary(set)
+		return tostring(set.parry or 0), set.parry or 0
+	end
 
-		O.modules.args.Parry = {
+	function mod:OnInitialize()
+		if not Skada.db.profile.modules.parrychannel then
+			Skada.db.profile.modules.parrychannel = "AUTO"
+		end
+		Skada.options.args.modules.args.Parry = {
 			type = "group",
-			name = self.localeName,
-			desc = format(L["Options for %s."], self.localeName),
+			name = self.moduleName,
+			desc = format(L["Options for %s."], self.moduleName),
 			args = {
 				header = {
 					type = "description",
-					name = self.localeName,
+					name = self.moduleName,
 					fontSize = "large",
-					image = [[Interface\ICONS\ability_parry]],
+					image = [[Interface\Icons\ability_parry]],
 					imageWidth = 18,
 					imageHeight = 18,
-					imageCoords = Skada.cropTable,
+					imageCoords = {0.05, 0.95, 0.05, 0.95},
 					width = "full",
 					order = 0
 				},
@@ -182,14 +191,14 @@ Skada:RegisterModule("Parry-Haste", function(L, P, _, _, M, O)
 				},
 				parryannounce = {
 					type = "toggle",
-					name = format(L["Announce %s"], self.localeName),
+					name = format(L["Announce %s"], self.moduleName),
 					order = 10,
 					width = "double"
 				},
 				parrychannel = {
 					type = "select",
 					name = L["Channel"],
-					values = {AUTO = L["Instance"], SELF = L["Self"]},
+					values = {AUTO = INSTANCE, SELF = L["Self"]},
 					order = 20,
 					width = "double"
 				}

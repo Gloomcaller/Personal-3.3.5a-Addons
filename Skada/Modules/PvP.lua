@@ -1,17 +1,18 @@
-local _, Skada = ...
-Skada:RegisterModule("Player vs. Player", "mod_pvp_desc", function(L, P, _, _, _, O)
-	local mode = Skada:NewModule("Player vs. Player")
+local Skada = Skada
+Skada:AddLoadableModule("PVP", function(L)
+	if Skada:IsDisabled("PVP") then return end
+
+	local mod = Skada:NewModule(PVP, "AceEvent-3.0")
 
 	local format, wipe, GetTime = string.format, wipe, GetTime
 	local UnitGUID, UnitClass, UnitBuff, UnitIsPlayer = UnitGUID, UnitClass, UnitBuff, UnitIsPlayer
-	local spellnames, UnitCastingInfo = Skada.spellnames, UnitCastingInfo
-	local group_units, group_pets = Skada.Units.group, Skada.Units.grouppet
+	local GetSpellInfo, UnitCastingInfo = GetSpellInfo, UnitCastingInfo
+	local _
 
-	local validclass = Skada.validclass
 	local specsCache, specsRoles = nil, nil
 	local spellsTable, aurasTable = nil, nil
 
-	local function build_spell_list()
+	local function BuildSpellsList()
 		if not specsRoles then
 			specsRoles = {
 				[105] = "HEALER", -- Druid: Restoration
@@ -27,54 +28,54 @@ Skada:RegisterModule("Player vs. Player", "mod_pvp_desc", function(L, P, _, _, _
 		if not aurasTable then
 			aurasTable = {
 				WARRIOR = {
-					[spellnames[56638]] = 71, -- Taste for Blood
-					[spellnames[64976]] = 71, -- Juggernaut
-					[spellnames[29801]] = 72, -- Rampage
-					[spellnames[50227]] = 73 -- Sword and Board
+					[GetSpellInfo(56638)] = 71, -- Taste for Blood
+					[GetSpellInfo(64976)] = 71, -- Juggernaut
+					[GetSpellInfo(29801)] = 72, -- Rampage
+					[GetSpellInfo(50227)] = 73 -- Sword and Board
 				},
 				PALADIN = {
-					[spellnames[68020]] = 70, -- Seal of Command
-					[spellnames[31801]] = 70 -- Seal of Vengeance
+					[GetSpellInfo(68020)] = 70, -- Seal of Command
+					[GetSpellInfo(31801)] = 70 -- Seal of Vengeance
 				},
 				ROGUE = {
-					[spellnames[58427]] = 259, -- Overkill
-					[spellnames[36554]] = 261, -- Shadowstep
-					[spellnames[31223]] = 261 -- Master of Subtlety
+					[GetSpellInfo(58427)] = 259, -- Overkill
+					[GetSpellInfo(36554)] = 261, -- Shadowstep
+					[GetSpellInfo(31223)] = 261 -- Master of Subtlety
 				},
 				PRIEST = {
-					[spellnames[52795]] = 256, -- Borrowed Time
-					[spellnames[47788]] = 257, -- Guardian Spirit
-					[spellnames[15473]] = 258, -- Shadowform
-					[spellnames[15286]] = 258 -- Vampiric Embrace
+					[GetSpellInfo(52795)] = 256, -- Borrowed Time
+					[GetSpellInfo(47788)] = 257, -- Guardian Spirit
+					[GetSpellInfo(15473)] = 258, -- Shadowform
+					[GetSpellInfo(15286)] = 258 -- Vampiric Embrace
 				},
 				DEATHKNIGHT = {
-					[spellnames[49016]] = 250, -- Hysteria
-					[spellnames[53138]] = 250, -- Abomination's Might
-					[spellnames[55610]] = 251, -- Imp. Icy Talons
-					[spellnames[49222]] = 252 -- Bone Shield
+					[GetSpellInfo(49016)] = 250, -- Hysteria
+					[GetSpellInfo(53138)] = 250, -- Abomination's Might
+					[GetSpellInfo(55610)] = 251, -- Imp. Icy Talons
+					[GetSpellInfo(49222)] = 252 -- Bone Shield
 				},
 				MAGE = {
-					[spellnames[11426]] = 62, -- Ice Barrier
-					[spellnames[11129]] = 63, -- Combustion
-					[spellnames[31583]] = 64 -- Arcane Empowerment
+					[GetSpellInfo(11426)] = 62, -- Ice Barrier
+					[GetSpellInfo(11129)] = 63, -- Combustion
+					[GetSpellInfo(31583)] = 64 -- Arcane Empowerment
 				},
 				WARLOCK = {
-					[spellnames[30299]] = 267 -- Nether Protection
+					[GetSpellInfo(30299)] = 267 -- Nether Protection
 				},
 				SHAMAN = {
-					[spellnames[51470]] = 262, -- Elemental Oath
-					[spellnames[30802]] = 263, -- Unleashed Rage
-					[spellnames[974]] = 264 -- Earth Shield
+					[GetSpellInfo(51470)] = 262, -- Elemental Oath
+					[GetSpellInfo(30802)] = 263, -- Unleashed Rage
+					[GetSpellInfo(974)] = 264 -- Earth Shield
 				},
 				HUNTER = {
-					[spellnames[20895]] = 253, -- Spirit Bond
-					[spellnames[19506]] = 254 -- Trueshot Aura
+					[GetSpellInfo(20895)] = 253, -- Spirit Bond
+					[GetSpellInfo(19506)] = 254 -- Trueshot Aura
 				},
 				DRUID = {
-					[spellnames[24907]] = 102, -- Moonkin Aura
-					[spellnames[24932]] = 103, -- Leader of the Pack
-					[spellnames[33891]] = 105, -- Tree of Life
-					[spellnames[48438]] = 105 -- Wild Growth
+					[GetSpellInfo(24907)] = 102, -- Moonkin Aura
+					[GetSpellInfo(24932)] = 103, -- Leader of the Pack
+					[GetSpellInfo(33891)] = 105, -- Tree of Life
+					[GetSpellInfo(48438)] = 105 -- Wild Growth
 				}
 			}
 		end
@@ -82,114 +83,99 @@ Skada:RegisterModule("Player vs. Player", "mod_pvp_desc", function(L, P, _, _, _
 		if not spellsTable then
 			spellsTable = {
 				WARRIOR = {
-					[spellnames[12294]] = 71, -- Mortal Strike
-					[spellnames[46924]] = 71, -- Bladestorm
-					[spellnames[1680]] = 72, -- Whirlwind
-					[spellnames[23881]] = 72, -- Bloodthirst
-					[spellnames[47475]] = 72, -- Slam
-					[spellnames[12809]] = 73, -- Concussion Blow
-					[spellnames[47498]] = 73 -- Devastate
+					[GetSpellInfo(12294)] = 71, -- Mortal Strike
+					[GetSpellInfo(46924)] = 71, -- Bladestorm
+					[GetSpellInfo(1680)] = 72, -- Whirlwind
+					[GetSpellInfo(23881)] = 72, -- Bloodthirst
+					[GetSpellInfo(47475)] = 72, -- Slam
+					[GetSpellInfo(12809)] = 73, -- Concussion Blow
+					[GetSpellInfo(47498)] = 73 -- Devastate
 				},
 				PALADIN = {
-					[spellnames[20473]] = 65, -- Holy Shock
-					[spellnames[53563]] = 65, -- Beacon of Light
-					[spellnames[31935]] = 66, -- Avenger's Shield
-					[spellnames[35395]] = 70, -- Crusader Strike
-					[spellnames[53385]] = 70, -- Divine Storm
-					[spellnames[20066]] = 70 -- Repentance
+					[GetSpellInfo(20473)] = 65, -- Holy Shock
+					[GetSpellInfo(53563)] = 65, -- Beacon of Light
+					[GetSpellInfo(31935)] = 66, -- Avenger's Shield
+					[GetSpellInfo(35395)] = 70, -- Crusader Strike
+					[GetSpellInfo(53385)] = 70, -- Divine Storm
+					[GetSpellInfo(20066)] = 70 -- Repentance
 				},
 				ROGUE = {
-					[spellnames[1329]] = 259, -- Mutilate
-					[spellnames[51662]] = 259, -- Hunger For Blood
-					[spellnames[51690]] = 260, -- Killing Spree
-					[spellnames[13877]] = 260, -- Blade Flurry
-					[spellnames[13750]] = 260, -- Adrenaline Rush
-					[spellnames[16511]] = 261, -- Hemorrhage
-					[spellnames[51713]] = 261 -- Shadow Dance
+					[GetSpellInfo(1329)] = 259, -- Mutilate
+					[GetSpellInfo(51662)] = 259, -- Hunger For Blood
+					[GetSpellInfo(51690)] = 260, -- Killing Spree
+					[GetSpellInfo(13877)] = 260, -- Blade Flurry
+					[GetSpellInfo(13750)] = 260, -- Adrenaline Rush
+					[GetSpellInfo(16511)] = 261, -- Hemorrhage
+					[GetSpellInfo(51713)] = 261 -- Shadow Dance
 				},
 				PRIEST = {
-					[spellnames[47540]] = 256, -- Penance
-					[spellnames[10060]] = 256, -- Power Infusion
-					[spellnames[33206]] = 256, -- Pain Suppression
-					[spellnames[34861]] = 257, -- Circle of Healing
-					[spellnames[15487]] = 258, -- Silence
-					[spellnames[34914]] = 258 -- Vampiric Touch
+					[GetSpellInfo(47540)] = 256, -- Penance
+					[GetSpellInfo(10060)] = 256, -- Power Infusion
+					[GetSpellInfo(33206)] = 256, -- Pain Suppression
+					[GetSpellInfo(34861)] = 257, -- Circle of Healing
+					[GetSpellInfo(15487)] = 258, -- Silence
+					[GetSpellInfo(34914)] = 258 -- Vampiric Touch
 				},
 				DEATHKNIGHT = {
-					[spellnames[45902]] = 250, -- Heart Strike
-					[spellnames[49203]] = 251, -- Hungering Cold
-					[spellnames[49143]] = 251, -- Frost Strike
-					[spellnames[49184]] = 251, -- Howling Blast
-					[spellnames[55090]] = 252 -- Scourge Strike
+					[GetSpellInfo(45902)] = 250, -- Heart Strike
+					[GetSpellInfo(49203)] = 251, -- Hungering Cold
+					[GetSpellInfo(49143)] = 251, -- Frost Strike
+					[GetSpellInfo(49184)] = 251, -- Howling Blast
+					[GetSpellInfo(55090)] = 252 -- Scourge Strike
 				},
 				MAGE = {
-					[spellnames[44425]] = 62, -- Arcane Barrage
-					[spellnames[44457]] = 63, -- Living Bomb
-					[spellnames[42859]] = 63, -- Scorch
-					[spellnames[31661]] = 63, -- Dragon's Breath
-					[spellnames[11113]] = 63, -- Blast Wave
-					[spellnames[44572]] = 64 -- Deep Freeze
+					[GetSpellInfo(44425)] = 62, -- Arcane Barrage
+					[GetSpellInfo(44457)] = 63, -- Living Bomb
+					[GetSpellInfo(42859)] = 63, -- Scorch
+					[GetSpellInfo(31661)] = 63, -- Dragon's Breath
+					[GetSpellInfo(11113)] = 63, -- Blast Wave
+					[GetSpellInfo(44572)] = 64 -- Deep Freeze
 				},
 				WARLOCK = {
-					[spellnames[48181]] = 265, -- Haunt
-					[spellnames[30108]] = 265, -- Unstable Affliction
-					[spellnames[59672]] = 266, -- Metamorphosis
-					[spellnames[50769]] = 267, -- Chaos Bolt
-					[spellnames[30283]] = 267 -- Shadowfury
+					[GetSpellInfo(48181)] = 265, -- Haunt
+					[GetSpellInfo(30108)] = 265, -- Unstable Affliction
+					[GetSpellInfo(59672)] = 266, -- Metamorphosis
+					[GetSpellInfo(50769)] = 267, -- Chaos Bolt
+					[GetSpellInfo(30283)] = 267 -- Shadowfury
 				},
 				SHAMAN = {
-					[spellnames[51490]] = 262, -- Thunderstorm
-					[spellnames[16166]] = 262, -- Elemental Mastery
-					[spellnames[51533]] = 263, -- Feral Spirit
-					[spellnames[30823]] = 263, -- Shamanistic Rage
-					[spellnames[17364]] = 263, -- Stormstrike
-					[spellnames[61295]] = 264, -- Riptide
-					[spellnames[51886]] = 264 -- Cleanse Spirit
+					[GetSpellInfo(51490)] = 262, -- Thunderstorm
+					[GetSpellInfo(16166)] = 262, -- Elemental Mastery
+					[GetSpellInfo(51533)] = 263, -- Feral Spirit
+					[GetSpellInfo(30823)] = 263, -- Shamanistic Rage
+					[GetSpellInfo(17364)] = 263, -- Stormstrike
+					[GetSpellInfo(61295)] = 264, -- Riptide
+					[GetSpellInfo(51886)] = 264 -- Cleanse Spirit
 				},
 				HUNTER = {
-					[spellnames[19577]] = 253, -- Intimidation
-					[spellnames[34490]] = 254, -- Silencing Shot
-					[spellnames[53209]] = 254, -- Chimera Shot
-					[spellnames[53301]] = 255, -- Explosive Shot
-					[spellnames[19386]] = 255 -- Wyvern Sting
+					[GetSpellInfo(19577)] = 253, -- Intimidation
+					[GetSpellInfo(34490)] = 254, -- Silencing Shot
+					[GetSpellInfo(53209)] = 254, -- Chimera Shot
+					[GetSpellInfo(53301)] = 255, -- Explosive Shot
+					[GetSpellInfo(19386)] = 255 -- Wyvern Sting
 				},
 				DRUID = {
-					[spellnames[48505]] = 102, -- Starfall
-					[spellnames[50516]] = 102, -- Typhoon
-					[spellnames[33876]] = 103, -- Mangle (Cat)
-					[spellnames[33878]] = 104, -- Mangle (Bear)
-					[spellnames[18562]] = 105 -- Swiftmend
+					[GetSpellInfo(48505)] = 102, -- Starfall
+					[GetSpellInfo(50516)] = 102, -- Typhoon
+					[GetSpellInfo(33876)] = 103, -- Mangle (Cat)
+					[GetSpellInfo(33878)] = 104, -- Mangle (Bear)
+					[GetSpellInfo(18562)] = 105 -- Swiftmend
 				}
 			}
 		end
 	end
 
-	local function unit_guid_and_class(unit)
-		-- validate unit.
-		local guid = unit and not group_units[unit] and not group_pets[unit] and UnitIsPlayer(unit) and UnitGUID(unit)
-		if not guid or specsCache[guid] then return end -- invalid or already cached
-
-		-- validate class
-		local _, class = UnitClass(unit)
-		if not validclass[class] then return end
-
-		return guid, class
-	end
-
-	function mode:UNIT_AURA(units)
-		if not self.enabled then
-			Skada.UnregisterBucket(self, "UNIT_AURA")
-			return
-		end
-
-		for unit in pairs(units) do
-			local guid, class = unit_guid_and_class(unit)
-			if guid and class then
+	function mod:UNIT_AURA(event, unit)
+		if Skada.instanceType ~= "pvp" and Skada.instanceType ~= "arena" then
+			self:UnregisterEvent("UNIT_AURA")
+		elseif unit and UnitIsPlayer(unit) and not specsCache[UnitGUID(unit)] then
+			local _, class = UnitClass(unit)
+			if class and Skada.validclass[class] then
 				local i = 1
 				local name = UnitBuff(unit, i)
 				while name do
 					if aurasTable[class] and aurasTable[class][name] then
-						specsCache[guid] = aurasTable[class][name]
+						specsCache[UnitGUID(unit)] = aurasTable[class][name]
 						break -- found
 					end
 					i = i + 1
@@ -199,133 +185,207 @@ Skada:RegisterModule("Player vs. Player", "mod_pvp_desc", function(L, P, _, _, _
 		end
 	end
 
-	function mode:UNIT_SPELLCAST_START(units)
-		if not self.enabled then
-			Skada.UnregisterBucket(self, "UNIT_SPELLCAST_START")
-			return
-		end
-
-		for unit in pairs(units) do
-			local guid, class = unit_guid_and_class(unit)
-			if guid and class then
-				local spell = UnitCastingInfo(unit)
-				if spell and spellsTable[class] and spellsTable[class][spell] then
-					specsCache[guid] = spellsTable[class][spell]
-				end
+	function mod:UNIT_SPELLCAST_START(event, unit)
+		if Skada.instanceType ~= "pvp" and Skada.instanceType ~= "arena" then
+			self:UnregisterEvent("UNIT_SPELLCAST_START")
+		elseif unit and UnitIsPlayer(unit) and not specsCache[UnitGUID(unit)] then
+			local _, class = UnitClass(unit)
+			local spell = UnitCastingInfo(unit)
+			if class and Skada.validclass[class] and spellsTable[class] and spellsTable[class][spell] then
+				specsCache[UnitGUID(unit)] = spellsTable[class][spell]
 			end
 		end
 	end
 
-	function mode:UNIT_SPELLCAST_SUCCEEDED(_, unit, spell)
-		if not self.enabled then
-			Skada.UnregisterEvent(self, "UNIT_SPELLCAST_SUCCEEDED")
-			return
-		end
-
-		local guid, class = unit_guid_and_class(unit)
-		if not guid or not spell then return end
-
-		if spellsTable[class] and spellsTable[class][spell] then
-			specsCache[guid] = spellsTable[class][spell]
-		end
-	end
-
-	function mode:CheckZone(_, current, previous)
-		self.enabled = current == "arena" or current == "pvp"
-
-		if current == previous then return end
-
+	function mod:CheckZone()
 		specsCache = wipe(specsCache or {})
 
-		if self.enabled then
-			build_spell_list()
-			Skada.RegisterBucketEvent(self, "UNIT_AURA", 0.2)
-			Skada.RegisterBucketEvent(self, "UNIT_SPELLCAST_START", 0.2)
-			Skada.RegisterEvent(self, "UNIT_SPELLCAST_SUCCEEDED")
+		if Skada.instanceType == "arena" or Skada.instanceType == "pvp" then
+			BuildSpellsList()
+			self:RegisterEvent("UNIT_AURA")
+			self:RegisterEvent("UNIT_SPELLCAST_START")
 			Skada.RegisterCallback(self, "Skada_GetEnemy", "GetEnemy")
 		else
-			Skada.UnregisterAllBuckets(self)
-			Skada.UnregisterEvent(self, "UNIT_SPELLCAST_SUCCEEDED")
-			Skada.UnregisterCallback(self, "Skada_GetEnemy")
+			self:UnregisterEvent("UNIT_AURA")
+			self:UnregisterEvent("UNIT_SPELLCAST_START")
+			Skada.UnregisterCallback(self, "Skada_GetEnemy", "GetEnemy")
 		end
 	end
 
-	function mode:GetEnemy(_, actor, set)
-		if not actor or actor.fake or not validclass[actor.class] then return end
+	function mod:GetEnemy(_, enemy)
+		if enemy and not enemy.fake and enemy.class and Skada.validclass[enemy.class] then
+			if enemy.spec == nil then
+				enemy.spec = specsCache[enemy.id]
+			end
 
-		actor.spec = actor.spec or specsCache[actor.id]
+			if enemy.spec and (enemy.role == nil or enemy.role == "NONE") then
+				enemy.role = specsRoles[enemy.spec] or "DAMAGER"
+			end
 
-		if actor.spec and (actor.role == nil or actor.role == "NONE") then
-			actor.role = specsRoles[actor.spec] or "DAMAGER"
+			if enemy.time == nil then
+				enemy.time = 0
+			end
+
+			if enemy.last == nil then
+				enemy.last = GetTime()
+			end
 		end
-
-		actor.time = actor.time or 0
-		actor.last = actor.last or Skada._Time or GetTime()
 	end
 
-	function mode:OnEnable()
+	function mod:OnEnable()
 		Skada.forPVP = true
+		self:ApplySettings()
+		-- things are disabled on Project Ascension sadly
+		if Skada.Ascension then return end
+
 		specsCache = specsCache or {}
-		Skada.RegisterMessage(self, "ZONE_TYPE_CHANGED", "CheckZone")
-		Skada.RegisterMessage(self, "COMBAT_PVP_START", "CheckZone")
-		Skada.RegisterMessage(self, "COMBAT_PVP_END", "CheckZone")
+		Skada.RegisterCallback(self, "Skada_ZoneCheck", "CheckZone")
 	end
 
-	function mode:OnDisable()
+	function mod:OnDisable()
 		Skada.forPVP = nil
-		Skada.UnregisterAllBuckets(self)
-		Skada.UnregisterAllEvents(self)
-		Skada.UnregisterAllMessages(self)
 		Skada.UnregisterAllCallbacks(self)
 	end
 
 	---------------------------------------------------------------------------
 
-	function mode:OnInitialize()
-		if P.modules.arena then
-			P.modules.arena = nil
+	local GetCVar, RGBPercToHex = GetCVar, Skada.RGBPercToHex
+	local teamGold = {r = 1, g = 0.82, b = 0, colorStr = "ffffd100"}
+	local teamGreen = {r = 0.1, g = 1, b = 0.1, colorStr = "ff19ff19"}
+	local teamPurple = {r = 0.686, g = 0.384, b = 1, colorStr = "ffae61ff"}
+
+	function mod:ApplySettings()
+		if not Skada.db.profile.modules.arena then
+			Skada.db.profile.modules.arena = {custom = false, ARENA_GOLD = teamGold, ARENA_GREEN = teamGreen}
 		end
 
-		-- add custom colors to tweaks
-		O.tweaks.args.advanced.args.colors.args.arean = {
+		-- yellow team!
+		if Skada.db.profile.modules.arena.custom == true and Skada.db.profile.modules.arena.ARENA_GOLD then
+			Skada.classcolors.ARENA_GOLD.r = Skada.db.profile.modules.arena.ARENA_GOLD.r
+			Skada.classcolors.ARENA_GOLD.g = Skada.db.profile.modules.arena.ARENA_GOLD.g
+			Skada.classcolors.ARENA_GOLD.b = Skada.db.profile.modules.arena.ARENA_GOLD.b
+			Skada.classcolors.ARENA_GOLD.colorStr = Skada.db.profile.modules.arena.ARENA_GOLD.colorStr
+		else
+			Skada.classcolors.ARENA_GOLD.r = teamGold.r
+			Skada.classcolors.ARENA_GOLD.g = teamGold.g
+			Skada.classcolors.ARENA_GOLD.b = teamGold.b
+			Skada.classcolors.ARENA_GOLD.colorStr = teamGold.colorStr
+		end
+
+		if Skada.db.profile.modules.arena.custom == true and Skada.db.profile.modules.arena.ARENA_GREEN then
+			Skada.classcolors.ARENA_GREEN.r = Skada.db.profile.modules.arena.ARENA_GREEN.r
+			Skada.classcolors.ARENA_GREEN.g = Skada.db.profile.modules.arena.ARENA_GREEN.g
+			Skada.classcolors.ARENA_GREEN.b = Skada.db.profile.modules.arena.ARENA_GREEN.b
+			Skada.classcolors.ARENA_GREEN.colorStr = Skada.db.profile.modules.arena.ARENA_GREEN.colorStr
+		elseif GetCVar("colorblindMode") == "1" then
+			Skada.classcolors.ARENA_GREEN.r = teamPurple.r
+			Skada.classcolors.ARENA_GREEN.g = teamPurple.g
+			Skada.classcolors.ARENA_GREEN.b = teamPurple.b
+			Skada.classcolors.ARENA_GREEN.colorStr = teamPurple.colorStr
+		else
+			Skada.classcolors.ARENA_GREEN.r = teamGreen.r
+			Skada.classcolors.ARENA_GREEN.g = teamGreen.g
+			Skada.classcolors.ARENA_GREEN.b = teamGreen.b
+			Skada.classcolors.ARENA_GREEN.colorStr = teamGreen.colorStr
+		end
+
+		Skada:ApplySettings()
+	end
+
+	function mod:OnInitialize()
+		-- install defaults.
+		if not Skada.db.profile.modules.arena then
+			Skada.db.profile.modules.arena = {ARENA_GOLD = teamGold, ARENA_GREEN = teamGreen}
+		end
+
+		-- options panel
+		Skada.options.args.tweaks.args.advanced.args.arenaoptions = {
 			type = "group",
-			name = L["Arena Teams"],
-			order = 40,
-			hidden = O.tweaks.args.advanced.args.colors.args.custom.disabled,
-			disabled = O.tweaks.args.advanced.args.colors.args.custom.disabled,
+			name = ARENA,
+			desc = format(L["Options for %s."], ARENA),
+			order = 30,
 			args = {
+				custom = {
+					type = "toggle",
+					name = L["Custom Arena Colors"],
+					desc = L["Enable this if you want to use custom arena teams colors."],
+					width = "double",
+					get = function()
+						return Skada.db.profile.modules.arena.custom
+					end,
+					set = function(i, val)
+						Skada.db.profile.modules.arena.custom = val
+						self:ApplySettings()
+					end,
+					order = 10
+				},
 				ARENA_GOLD = {
 					type = "color",
-					name = L["ARENA_GOLD"],
-					desc = format(L["Color for %s."], L["ARENA_GOLD"])
+					name = L["Gold Team"],
+					desc = format(L["Color for %s."], L["Gold Team"]),
+					get = function()
+						local color = Skada.db.profile.modules.arena.ARENA_GOLD or Skada.classcolors.ARENA_GOLD
+						return color.r, color.g, color.b
+					end,
+					set = function(_, r, g, b)
+						Skada.db.profile.modules.arena.ARENA_GOLD.r = r
+						Skada.db.profile.modules.arena.ARENA_GOLD.g = g
+						Skada.db.profile.modules.arena.ARENA_GOLD.b = b
+						Skada.db.profile.modules.arena.ARENA_GOLD.colorStr = RGBPercToHex(r, g, b)
+						self:ApplySettings()
+					end,
+					disabled = function()
+						return not Skada.db.profile.modules.arena.custom
+					end,
+					order = 20
 				},
 				ARENA_GREEN = {
 					type = "color",
-					name = L["ARENA_GREEN"],
-					desc = format(L["Color for %s."], L["ARENA_GREEN"])
+					name = L["Green Team"],
+					desc = format(L["Color for %s."], L["Green Team"]),
+					get = function()
+						local color = Skada.db.profile.modules.arena.ARENA_GREEN or Skada.classcolors.ARENA_GREEN
+						return color.r, color.g, color.b
+					end,
+					set = function(_, r, g, b)
+						Skada.db.profile.modules.arena.ARENA_GREEN.r = r
+						Skada.db.profile.modules.arena.ARENA_GREEN.g = g
+						Skada.db.profile.modules.arena.ARENA_GREEN.b = b
+						Skada.db.profile.modules.arena.ARENA_GREEN.colorStr = RGBPercToHex(r, g, b)
+						self:ApplySettings()
+					end,
+					disabled = function()
+						return not Skada.db.profile.modules.arena.custom
+					end,
+					order = 30
+				},
+				empty_1 = {
+					type = "description",
+					name = " ",
+					width = "full",
+					order = 40
+				},
+				reset = {
+					type = "execute",
+					name = RESET,
+					func = function()
+						-- reset yellow team
+						Skada.db.profile.modules.arena.ARENA_GOLD.r = teamGold.r
+						Skada.db.profile.modules.arena.ARENA_GOLD.g = teamGold.g
+						Skada.db.profile.modules.arena.ARENA_GOLD.b = teamGold.b
+						Skada.db.profile.modules.arena.ARENA_GOLD.colorStr = teamGold.colorStr
+						-- reset green team
+						Skada.db.profile.modules.arena.ARENA_GREEN.r = teamGreen.r
+						Skada.db.profile.modules.arena.ARENA_GREEN.g = teamGreen.g
+						Skada.db.profile.modules.arena.ARENA_GREEN.b = teamGreen.b
+						Skada.db.profile.modules.arena.ARENA_GREEN.colorStr = teamGreen.colorStr
+						-- appy settings
+						self:ApplySettings()
+					end,
+					width = "double",
+					order = 50
 				}
 			}
 		}
 	end
-
-	---------------------------------------------------------------------------
-
-	-- arena custom colors
-	local classcolors = Skada.classcolors or {}
-	Skada.classcolors = classcolors
-
-	classcolors.ARENA_GOLD = {r = 1, g = 0.82, b = 0, colorStr = "ffffd100"}
-	classcolors.ARENA_GREEN = {r = 0.1, g = 1, b = 0.1, colorStr = "ff19ff19"}
-
-	-- purple color instead of green for color blind mode.
-	if GetCVar("colorblindMode") == "1" then
-		classcolors.ARENA_GREEN.r = 0.686
-		classcolors.ARENA_GREEN.g = 0.384
-		classcolors.ARENA_GREEN.b = 1
-		classcolors.ARENA_GREEN.colorStr = "ffae61ff"
-	end
-
-	-- localize arena team colors (just in case)
-	L["ARENA_GREEN"] = L["Green Team"]
-	L["ARENA_GOLD"] = L["Gold Team"]
 end)

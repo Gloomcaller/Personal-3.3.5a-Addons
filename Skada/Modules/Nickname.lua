@@ -1,24 +1,23 @@
-local _, Skada = ...
-Skada:RegisterModule("Nickname", function(L, P, G, _, _, O)
-	local mode = Skada:NewModule("Nickname")
-	local CONST_COMM_MOD = "Nickname"
+local Skada = Skada
+Skada:AddLoadableModule("Nickname", function(L)
+	if Skada:IsDisabled("Nickname") then return end
 
-	local time, wipe = time, wipe
-	local strlower, format = string.lower, string.format
-	local check_nickname, cached_nickname
+	local mod = Skada:NewModule(L["Nickname"], "AceTimer-3.0")
+	local Translit = LibStub("LibTranslit-1.0", true)
+
+	local time, wipe, format = time, wipe, string.format
+	local CheckNickname
 
 	do
-		local type, strlen = type, strlenutf8 or string.len
-		local strfind, strmatch = string.find, string.match
-		local strupper, strgsub = string.upper, string.gsub
+		local type, strlen, strfind, strgsub = type, string.len, string.find, string.gsub
 
-		local function str_trim(str)
-			local from = strmatch(str, "^%s*()")
-			return from > #str and "" or strmatch(str, ".*%S", from)
+		local function _trim(str)
+			local from = str:match("^%s*()")
+			return from > #str and "" or str:match(".*%S", from)
 		end
 
-		local function title_case(first, rest)
-			return format("%s%s", strupper(first), strlower(rest))
+		local function titlecase(first, rest)
+			return first:upper() .. rest:lower()
 		end
 
 		local have_repeated = false
@@ -111,8 +110,8 @@ Skada:RegisterModule("Nickname", function(L, P, G, _, _, O)
 			"fucck",
 			"fuck",
 			"fuk",
-			"fukin",
-			"fukk",
+			"Fukin",
+			"Fukk",
 			"fuuck",
 			"gay",
 			"godammit",
@@ -295,11 +294,7 @@ Skada:RegisterModule("Nickname", function(L, P, G, _, _, O)
 			"wife",
 			"wog",
 			"ziga",
-			"zipp",
-			"name",
-			L["Name"],
-			"nickname",
-			L["Nickname"]
+			"zipp"
 		}
 
 		local function check_repeated(char)
@@ -312,17 +307,15 @@ Skada:RegisterModule("Nickname", function(L, P, G, _, _, O)
 			end
 		end
 
-		function check_nickname(name)
+		function CheckNickname(name)
 			if type(name) ~= "string" then
 				return false, L["Nickname isn't a valid string."]
 			end
 
-			name = str_trim(name)
+			name = _trim(name)
 
 			local len = strlen(name)
-			if len == 0 then
-				return true, nil
-			elseif len > 12 then
+			if len > 12 then
 				return false, L["Your nickname is too long, max of 12 characters is allowed."]
 			end
 
@@ -331,15 +324,15 @@ Skada:RegisterModule("Nickname", function(L, P, G, _, _, O)
 				return false, L["Only letters and two spaces are allowed."]
 			end
 
-			for _, word in pairs(blacklist) do
-				if strfind(strlower(name), word) then
+			for _, word in ipairs(blacklist) do
+				if strfind(name, word) then
 					return false, L["Your nickname contains a forbidden word."]
 				end
 			end
 
 			have_repeated = false
 			count_spaces = 0
-			strgsub(strgsub(strgsub(name, ".", "\0%0%0"), "(.)%z%1", "%1"), "%z.([^%z]+)", check_repeated)
+			strgsub(name, ".", "\0%0%0"):gsub("(.)%z%1", "%1"):gsub("%z.([^%z]+)", check_repeated)
 			if count_spaces > 2 then
 				have_repeated = true
 			end
@@ -347,82 +340,56 @@ Skada:RegisterModule("Nickname", function(L, P, G, _, _, O)
 				return false, L["You can't use the same letter three times consecutively, two spaces consecutively or more then two spaces."]
 			end
 
-			return true, strgsub(name, "(%a)([%w_']*)", title_case)
+			return true, name:gsub("(%a)([%w_']*)", titlecase)
 		end
 	end
 
-	function mode:OnEvent(event)
+	function mod:OnEvent(event)
 		if self.sendCooldown > time() then
-			self.nicknameTimer = self.nicknameTimer or Skada.ScheduleTimer(self, "SendNickname", 30)
+			self:ScheduleTimer("SendNickname", 30)
 		else
 			self:SendNickname()
 		end
 	end
 
-	function mode:SendNickname(nocooldown)
+	function mod:SendNickname(nocooldown)
 		self:SetCacheTable()
 
 		if not nocooldown then
 			self.sendCooldown = time() + 29
 		end
 
-		if self.nicknameTimer then
-			Skada.CancelTimer(self, "SendNickname", true)
-			self.nicknameTimer = nil
-		end
-
-		Skada:SendComm(nil, nil, CONST_COMM_MOD, Skada.userGUID, G.nickname)
+		Skada:SendComm(nil, nil, "Nickname", Skada.userGUID, Skada.db.profile.nickname)
 	end
 
-	local function remove_nickname(guid)
-		if mode.db.cache[guid] then
-			mode.db.cache[guid] = nil
-		end
-		cached_nickname[guid] = false
-	end
-
-	function mode:OnCommNickname(sender, guid, nickname)
+	function mod:OnCommNickname(event, sender, guid, nickname)
 		self:SetCacheTable()
-		if not P.ignorenicknames and sender and guid then
-			-- no nickname or removed?
-			if not nickname then
-				remove_nickname(guid)
-				return
+		if Skada.db.profile.ignorenicknames then return end
+		if sender and guid and guid ~= Skada.userGUID and nickname then
+			local okey, nickname = CheckNickname(nickname)
+			if not okey or nickname == "" then
+				self.db.cache[guid] = nil -- remove if invalid or empty
+			elseif not self.db.cache[guid] or self.db.cache[guid] ~= nickname then
+				self.db.cache[guid] = nickname -- only change if different
 			end
-
-			local okey = nil
-			okey, nickname = check_nickname(nickname)
-			-- received an invalid nickname?
-			if not okey or not nickname or nickname == "" then
-				remove_nickname(guid)
-				return
-			end
-
-			-- so far so good? update...
-			self.db.cache[guid] = nickname -- only change if different
-			cached_nickname[guid] = nickname -- cache it and we're done!
 		end
 	end
 
-	function mode:OnInitialize()
-		P.namedisplay = P.namedisplay or 2
-
-		-- move nickname to global
-		if P.nickname then
-			G.nickname = G.nickname or P.nickname
-			P.nickname = nil
+	function mod:OnInitialize()
+		if Skada.db.profile.namedisplay == nil then
+			Skada.db.profile.namedisplay = 2
 		end
 
-		O.tweaks.args.advanced.args.nickname = {
+		Skada.options.args.tweaks.args.advanced.args.nickname = {
 			type = "group",
-			name = self.localeName,
-			desc = format(L["Options for %s."], self.localeName),
+			name = self.moduleName,
+			desc = format(L["Options for %s."], self.moduleName),
 			order = 900,
 			get = function(i)
-				return P[i[#i]]
+				return Skada.db.profile[i[#i]]
 			end,
 			set = function(i, val)
-				P[i[#i]] = val
+				Skada.db.profile[i[#i]] = val
 				Skada:ApplySettings()
 			end,
 			args = {
@@ -439,14 +406,13 @@ Skada:RegisterModule("Nickname", function(L, P, G, _, _, O)
 					desc = L["Set a nickname for you."],
 					order = 10,
 					get = function()
-						return G.nickname
+						return Skada.db.profile.nickname
 					end,
 					set = function(_, val)
-						local okey, nickname = check_nickname(val)
+						local okey, nickname = CheckNickname(val)
 						if okey == true then
-							G.nickname = nickname
-							cached_nickname[Skada.userGUID] = nickname or false
-							mode:SendNickname(true)
+							Skada.db.profile.nickname = nickname
+							mod:SendNickname(true)
 							Skada:ApplySettings()
 						else
 							Skada:Print(nickname)
@@ -461,19 +427,14 @@ Skada:RegisterModule("Nickname", function(L, P, G, _, _, O)
 					values = {
 						[1] = L["Name"],
 						[2] = L["Nickname"],
-						[3] = format("%s (%s)", L["Name"], L["Nickname"]),
-						[4] = format("%s (%s)", L["Nickname"], L["Name"])
+						[3] = L["Name"] .. " (" .. L["Nickname"] .. ")",
+						[4] = L["Nickname"] .. " (" .. L["Name"] .. ")"
 					}
 				},
 				ignorenicknames = {
 					type = "toggle",
 					name = L["Ignore Nicknames"],
 					desc = L["When enabled, nicknames set by Skada users are ignored."],
-					set = function(_, value)
-						P.ignorenicknames = value
-						mode:UpdateComms(nil, not P.syncoff)
-						Skada:ApplySettings()
-					end,
 					order = 30,
 					width = "full"
 				},
@@ -486,44 +447,32 @@ Skada:RegisterModule("Nickname", function(L, P, G, _, _, O)
 						return L["Are you sure you want clear cached nicknames?"]
 					end,
 					func = function()
-						G.nicknames.reset = nil
-						G.nicknames.cache = wipe(G.nicknames.cache or {})
-						mode:SetCacheTable()
+						Skada.db.global.nicknames.reset = nil
+						Skada.db.global.nicknames.cache = wipe(Skada.db.global.nicknames.cache or {})
+						mod:SetCacheTable()
 					end,
 					disabled = function()
-						return (not G.nicknames or next(G.nicknames.cache) == nil)
+						return (not Skada.db.global.nicknames or next(Skada.db.global.nicknames.cache) == nil)
 					end
 				}
 			}
 		}
 	end
 
-	function mode:UpdateComms(_, enable)
-		if enable and not P.ignorenicknames then
-			Skada.AddComm(self, CONST_COMM_MOD, "OnCommNickname")
-			Skada.RegisterMessage(self, "GROUP_ROSTER_UPDATE", "OnEvent")
-			Skada:Debug(format("%s Comms: \124cff00ff00%s\124r", self.localeName, L["ENABLED"]))
-		else
-			Skada.RemoveAllComms(self)
-			Skada.UnregisterAllMessages(self)
-			Skada:Debug(format("%s Comms: \124cffff0000%s\124r", self.localeName, L["DISABLED"]))
-		end
-	end
-
-	function mode:OnEnable()
+	function mod:OnEnable()
 		self.sendCooldown = 0
 		self:SetCacheTable()
 
 		Skada.RegisterCallback(self, "Skada_UpdateCore", "Reset")
-		Skada.RegisterCallback(self, "Skada_UpdateComms", "UpdateComms")
+		Skada.RegisterCallback(self, "OnCommNickname")
 
-		self:UpdateComms(nil, not P.syncoff)
+		Skada:RegisterMessage("GROUP_ROSTER_UPDATE", self.OnEvent, self)
+		self:OnEvent()
 	end
 
-	function mode:OnDisable()
+	function mod:OnDisable()
 		Skada.UnregisterAllCallbacks(self)
 		Skada:UnregisterAllMessages(self)
-		Skada.RemoveAllComms(self)
 	end
 
 	-----------------------------------------------------------
@@ -531,71 +480,65 @@ Skada:RegisterModule("Nickname", function(L, P, G, _, _, O)
 
 	do
 		-- modify this if you want to change the way nicknames are displayed
-		local nickname_fmt = {[1] = "%1$s", [2] = "%2$s", [3] = "%1$s (%2$s)", [4] = "%2$s (%1$s)"}
+		local nicknameFormats = {[1] = "%1$s", [2] = "%2$s", [3] = "%1$s (%2$s)", [4] = "%2$s (%1$s)"}
 
-		cached_nickname = setmetatable({}, {__mode = "kv", __index = function(t, guid)
-			if not mode.db then mode:SetCacheTable() end -- why wasn't it available yet?!
+		function Skada:FormatName(name, guid)
+			if not self.db.profile.ignorenicknames and (self.db.profile.namedisplay or 0) > 1 and name and guid then
+				if not mod.db then mod:SetCacheTable() end
 
-			local nickname = false
+				local nickname
+				if guid == self.userGUID then
+					nickname = self.db.profile.nickname
+				elseif mod.db and mod.db.cache[guid] then
+					nickname = mod.db.cache[guid]
+				end
 
-			-- ignoring nicknames and it's not me?
-			if P.ignorenicknames and guid ~= Skada.userGUID then
-				nickname = false
-			-- me?
-			elseif guid == Skada.userGUID then
-				nickname = G.nickname or false
-			-- well! we've got one!
-			elseif mode.db and mode.db.cache[guid] then
-				nickname = mode.db and mode.db.cache[guid] or false
+				if nickname and nickname ~= name and nickname ~= "" then
+					name = format(nicknameFormats[self.db.profile.namedisplay], name, nickname)
+				end
 			end
 
-			-- cache it and move on!
-			t[guid] = nickname
-			return nickname
-		end})
-
-		Skada.oFormatName = Skada.FormatName
-		Skada.FormatName = function(self, name, guid)
-			-- missing guid or showing only names?
-			if not guid or P.namedisplay <= 1 then
-				return self:oFormatName(name)
-			end
-
-			-- cache table handles the worse part!
-			local nickname = cached_nickname[guid]
-			if nickname and nickname ~= name then
-				name = format(nickname_fmt[P.namedisplay], name, nickname)
-			end
-
-			-- leave the rest to the original func!
-			return self:oFormatName(name)
+			return (self.db.profile.translit and Translit) and Translit:Transliterate(name, "!") or name
 		end
 	end
 
 	-----------------------------------------------------------
 	-- cache table functions
 
-	local function check_for_reset()
-		if not mode.db.reset or time() > mode.db.reset then
-			mode.db.reset = time() + (60 * 60 * 24 * 15)
-			mode.db.cache = wipe(mode.db.cache or {})
+	local function CheckForReset()
+		if not mod.db.reset then
+			mod.db.reset = time() + (60 * 60 * 24 * 15)
+			mod.db.cache = {}
+		elseif time() > mod.db.reset then
+			mod.db.reset = time() + (60 * 60 * 24 * 15)
+			wipe(mod.db.cache)
 		end
 	end
 
-	function mode:SetCacheTable()
+	function mod:SetCacheTable()
 		if not self.db then
-			G.nicknames = G.nicknames or {cache = {}}
-			self.db = G.nicknames
+			if not Skada.db.global.nicknames then
+				Skada.db.global.nicknames = {cache = {}}
+			end
+			self.db = Skada.db.global.nicknames
 		end
-		check_for_reset()
+		CheckForReset()
 	end
 
-	function mode:Reset()
-		P.namedisplay = P.namedisplay or 2
+	function mod:Reset(event)
+		if event == "Skada_UpdateCore" then
+			if Skada.db.profile.namedisplay == nil then
+				Skada.db.profile.namedisplay = 2
+			end
 
-		G.nicknames = G.nicknames or {cache = {}}
-		G.nicknames.reset = time() + (60 * 60 * 24 * 15)
-		G.nicknames.cache = wipe(G.nicknames.cache or {})
-		self.db = G.nicknames
+			if not Skada.db.global.nicknames then
+				Skada.db.global.nicknames = {cache = {}}
+			else
+				Skada.db.global.nicknames.reset = time() + (60 * 60 * 24 * 15)
+				wipe(Skada.db.global.nicknames.cache)
+			end
+
+			self.db = Skada.db.global.nicknames
+		end
 	end
 end)

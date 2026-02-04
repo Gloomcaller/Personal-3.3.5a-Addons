@@ -9,20 +9,25 @@
 ## Notes-ruRU: Измеритель урона.
 ## Notes-zhCN: 模块化伤害统计。
 ## Notes-zhTW: 模組化的傷害統計。
-## OptionalDeps: Ace3, LibSharedMedia-3.0, LibDBIcon-1.0, AceGUI-3.0-SharedMediaWidgets, LibBossIDs-1.0, LibFail-1.0
+## OptionalDeps: Ace3, LibSharedMedia-3.0, LibWindow-1.1, LibDBIcon-1.0, AceGUI-3.0-SharedMediaWidgets, LibBossIDs-1.0, LibFail-1.0
 ## LoadOnDemand: 0
 ## SavedVariables: SkadaDB
 ## SavedVariablesPerCharacter: SkadaCharDB
 ## DefaultState: enabled
-## Author: Kader (|cff808080bkader#5341|r)
-## Version: 1.8.87
-## X-Date: 2024-03-23 @ 11:22 |cff808080UTC|r
+## Author: Kader (|cff808080bkader#6361|r)
+## Version: 1.8.75
+## X-Date: 2022-04-03 @ 12:37 AM |cff808080UTC|r
 ## X-Credits: Zarnivoop
-## X-Curse-Project-ID: 623633
 ## X-Category: Combat
 ## X-License: MIT/X
+## X-Email: bkader@mail.com
+## X-Website: https://github.com/bkader/Skada-WoTLK
+## X-Discord: https://discord.gg/a8z5CyS3eW
+## X-Localizations: meatgaga (CN), Ícar & Septimun (ES), Kader (FR), NGL (RU)
+## X-Thanks: Abel, Iqui, Jeb, Nomadra, Shoggoth, Havi & Ganrod, WotLK Community, Project Ascension
+## X-Donate: |cff0079c1PayPal|r or |cff246a96Paysera|r at |cff20ff20bkader@mail.com|r
 
-Libs\Load.xml
-Locales\Load.xml
-Core\Load.xml
-Modules\Load.xml
+Libs\Libs.xml
+Locales\Locales.xml
+Core\Core.xml
+Modules\Modules.xml

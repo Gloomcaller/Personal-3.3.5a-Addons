@@ -1,13 +1,15 @@
 local Skada = _G.Skada
 if not Skada then return end
-Skada:RegisterModule("Improvement", function(L)
-	local mod = Skada:NewModule("Improvement")
-	local mod_modes = mod:NewModule("Improvement modes")
-	local mod_comparison = mod:NewModule("Improvement comparison")
+Skada:AddLoadableModule("Improvement", function(L)
+	if Skada:IsDisabled("Improvement") then return end
 
-	local pairs, date, tostring = pairs, date, tostring
-	local windows = Skada.windows
-	local userGUID = Skada.userGUID or UnitGUID("player")
+	local mod = Skada:NewModule(L["Improvement"])
+	local mod_modes = mod:NewModule(L["Improvement modes"])
+	local mod_comparison = mod:NewModule(L["Improvement comparison"])
+
+	local pairs, ipairs, select = pairs, ipairs, select
+	local date, tostring = date, tostring
+	local playerid = UnitGUID("player")
 
 	local modes = {
 		"ActiveTime",
@@ -47,42 +49,40 @@ Skada:RegisterModule("Improvement", function(L)
 
 	local updaters = {}
 
-	updaters.ActiveTime = function(set, actor)
-		return Skada:GetActiveTime(set, actor, true)
+	updaters.ActiveTime = function(set, player)
+		return Skada:GetActiveTime(set, player, true)
 	end
 
-	updaters.Damage = function(set, actor)
-		return actor.damage
+	updaters.Damage = function(set, player)
+		return player.damage or 0
 	end
 
-	updaters.DamageTaken = function(set, actor)
-		return actor.damaged
+	updaters.DamageTaken = function(set, player)
+		return player.damagetaken or 0
 	end
 
-	updaters.Deaths = function(set, actor)
-		return actor.deaths or actor.death
+	updaters.Deaths = function(set, player)
+		return player.deaths or 0
 	end
 
-	updaters.Healing = function(set, actor)
-		if actor.heal or actor.absorb then
-			return (actor.heal or 0) + (actor.absorb or 0)
-		end
+	updaters.Healing = function(set, player)
+		return (player.heal or 0) + (player.absorb or 0)
 	end
 
-	updaters.Overhealing = function(set, actor)
-		return actor.overheal
+	updaters.Overhealing = function(set, player)
+		return player.overheal or 0
 	end
 
-	updaters.Interrupts = function(set, actor)
-		return actor.interrupt
+	updaters.Interrupts = function(set, player)
+		return player.interrupt or 0
 	end
 
-	updaters.Dispels = function(set, actor)
-		return actor.dispel
+	updaters.Dispels = function(set, player)
+		return player.dispel or 0
 	end
 
-	updaters.Fails = function(set, actor)
-		return actor.fail
+	updaters.Fails = function(set, player)
+		return player.fail or 0
 	end
 
 	local function find_boss_data(bossname)
@@ -101,49 +101,45 @@ Skada:RegisterModule("Improvement", function(L)
 	end
 
 	local function find_encounter_data(boss, starttime)
-		for i = 1, #boss.encounters do
-			local encounter = boss.encounters[i]
-			if encounter and encounter.starttime == starttime then
+		for i, encounter in ipairs(boss.encounters) do
+			if encounter.starttime == starttime then
 				return encounter
 			end
 		end
 
-		boss.encounters[#boss.encounters + 1] = {starttime = starttime, data = {}}
+		tinsert(boss.encounters, {starttime = starttime, data = {}})
 		return find_encounter_data(boss, starttime)
 	end
 
 	function mod_comparison:Enter(win, id, label)
 		win.targetid, win.modename = id, revlocalized[label] or label
-		win.title = (win.targetname or L["Unknown"]) .. " - " .. label
+		win.title = (win.targetname or UNKNOWN) .. " - " .. label
 	end
 
 	function mod_comparison:Update(win, set)
-		win.title = (win.targetname or L["Unknown"]) .. " - " .. (localized[win.modename] or win.modename)
-		local boss = win.modename and win.targetname and find_boss_data(win.targetname)
+		win.title = (win.targetname or UNKNOWN) .. " - " .. (localized[win.modename] or win.modename)
+		local boss = find_boss_data(win.targetname)
 
-		if not boss or not boss.encounters then
-			return
-		elseif win.metadata then
-			win.metadata.maxvalue = 0
-		end
+		if boss and boss.encounters then
+			if win.metadata then
+				win.metadata.maxvalue = 0
+			end
 
-		local nr = 0
-		for i = 1, #boss.encounters do
-			local encounter = boss.encounters[i]
-			local value = encounter and encounter.data and encounter.data[win.modename]
-			if value and value > 0 then
+			local nr = 0
+			for i, encounter in ipairs(boss.encounters) do
 				nr = nr + 1
-
 				local d = win:nr(nr)
+
 				d.id = i
 				d.label = date("%x %X", encounter.starttime)
-				d.value = value
+
+				d.value = encounter.data[win.modename] or 0
 				if win.modename == "ActiveTime" then
 					d.valuetext = Skada:FormatTime(d.value)
 				elseif win.modename == "Deaths" or win.modename == "Interrupts" or win.modename == "Fails" then
 					d.valuetext = tostring(d.value)
 				else
-					d.valuetext = Skada:FormatValueCols(
+					d.valuetext = Skada:FormatColumns(
 						Skada:FormatNumber(d.value),
 						Skada:FormatNumber((d.value) / max(1, encounter.data.ActiveTime or 0))
 					)
@@ -162,28 +158,29 @@ Skada:RegisterModule("Improvement", function(L)
 	end
 
 	function mod_modes:Update(win, set)
-		win.title = L["%s's overall data"]:format(win.targetname or L["Unknown"])
-		local boss = win.targetname and find_boss_data(win.targetname)
+		win.title = L["%s's overall data"]:format(win.targetname or UNKNOWN)
+		local boss = find_boss_data(win.targetname)
 
-		if not boss then
-			return
-		elseif win.metadata then
-			win.metadata.maxvalue = 1
-		end
-
-		local nr = 0
-		for i = 1, #modes do
-			local mode = modes[i]
-			local value = 0
-			for j = 1, #boss.encounters do
-				value = value + (boss.encounters[j].data[mode] or 0)
+		if boss then
+			if win.metadata then
+				win.metadata.maxvalue = 1
 			end
-			if value > 0 then
-				nr = nr + 1
 
+			local nr = 0
+			for i, mode in ipairs(modes) do
+				nr = nr + 1
 				local d = win:nr(nr)
+
 				d.id = i
 				d.label = localized[mode] or mode
+
+				local value, active = 0, 0
+
+				for _, encounter in ipairs(boss.encounters) do
+					value = value + (encounter.data[mode] or 0)
+					active = active + (encounter.data.ActiveTime or 0)
+				end
+
 				d.value = value
 
 				if mode == "ActiveTime" then
@@ -199,68 +196,78 @@ Skada:RegisterModule("Improvement", function(L)
 
 	function mod:Update(win, set)
 		win.title = L["Improvement"]
-		if not self.db then
-			return
-		elseif win.metadata then
-			win.metadata.maxvalue = 0
-		end
 
-		local nr = 0
-		for name, data in pairs(self.db) do
-			nr = nr + 1
+		if self.db then
+			if win.metadata then
+				win.metadata.maxvalue = 0
+			end
 
-			local d = win:nr(nr)
-			d.id = name
-			d.label = name
-			d.class = "BOSS"
-			d.value = data.count
-			d.valuetext = tostring(data.count)
+			local nr = 0
+			for name, data in pairs(self.db) do
+				nr = nr + 1
+				local d = win:nr(nr)
 
-			if win.metadata and d.value > win.metadata.maxvalue then
-				win.metadata.maxvalue = d.value
+				d.id = name
+				d.label = name
+				d.class = "BOSS"
+				d.value = data.count
+				d.valuetext = tostring(data.count)
+
+				if win.metadata and d.value > win.metadata.maxvalue then
+					win.metadata.maxvalue = d.value
+				end
 			end
 		end
 	end
 
 	function mod:OnInitialize()
-		if self.db then return end
+		if not self.db then
+			SkadaImprovementDB = SkadaImprovementDB or {}
 
-		SkadaImprovementDB = SkadaImprovementDB or {}
-		self.db = SkadaImprovementDB
+			-- get back old data
+			if Skada.char.improvement then
+				if Skada.char.improvement.bosses then
+					SkadaImprovementDB = CopyTable(Skada.char.improvement.bosses or {})
+				else
+					SkadaImprovementDB = CopyTable(Skada.char.improvement)
+				end
+				Skada.char.improvement = nil
+			end
+
+			self.db = SkadaImprovementDB
+		end
 	end
 
-	function mod:BossDefeated(_, set)
-		if not set or set.type ~= "raid" or not set.success then return end
+	function mod:BossDefeated(event, set)
+		if event == "COMBAT_BOSS_DEFEATED" and set and set.type == "raid" and set.success then
+			local boss = find_boss_data(set.mobname)
+			if not boss then return end
 
-		local boss = find_boss_data(set.mobname)
-		if not boss then return end
+			local encounter = find_encounter_data(boss, set.starttime)
+			if not encounter then return end
 
-		local encounter = find_encounter_data(boss, set.starttime)
-		if not encounter then return end
-
-		local actors = set.actors
-		for _, actor in pairs(actors) do
-			if actor.id == userGUID then
-				for j = 1, #modes do
-					local mode = modes[j]
-					if mode and updaters[mode] then
-						encounter.data[mode] = updaters[mode](set, actor)
-					elseif mode then
-						encounter.data[mode] = actor[mode:lower()]
+			for _, player in ipairs(set.players) do
+				if player.id == playerid then
+					for _, mode in ipairs(modes) do
+						if updaters[mode] then
+							encounter.data[mode] = updaters[mode](set, player)
+						else
+							encounter.data[mode] = player[mode:lower()]
+						end
 					end
+					-- increment boss count and stop
+					boss.count = boss.count + 1
+					if boss.count ~= #boss.encounters then
+						boss.count = #boss.encounters
+					end
+					break
 				end
-				-- increment boss count and stop
-				boss.count = boss.count + 1
-				if boss.count ~= #boss.encounters then
-					boss.count = #boss.encounters
-				end
-				break
 			end
 		end
 	end
 
 	function mod:OnEnable()
-		userGUID = userGUID or Skada.userGUID or UnitGUID("player")
+		playerid = playerid or UnitGUID("player")
 		self:OnInitialize()
 
 		mod_comparison.metadata = {notitleset = true}
@@ -268,7 +275,7 @@ Skada:RegisterModule("Improvement", function(L)
 		self.metadata = {
 			click1 = mod_modes,
 			notitleset = true, -- ignore title set
-			icon = [[Interface\ICONS\ability_warrior_intensifyrage]]
+			icon = "Interface\\Icons\\ability_warrior_intensifyrage"
 		}
 
 		Skada.RegisterMessage(self, "COMBAT_BOSS_DEFEATED", "BossDefeated")
@@ -281,43 +288,39 @@ Skada:RegisterModule("Improvement", function(L)
 	end
 
 	local function ask_for_reset()
-		if not StaticPopupDialogs["SkadaResetImprovementDialog"] then
-			StaticPopupDialogs["SkadaResetImprovementDialog"] = {
-				text = L["Do you want to reset your improvement data?"],
-				button1 = L["Accept"],
-				button2 = L["Cancel"],
-				timeout = 30,
-				whileDead = 0,
-				hideOnEscape = 1,
-				OnAccept = function()
-					mod:Reset()
-				end
-			}
-		end
-		StaticPopup_Show("SkadaResetImprovementDialog")
+		StaticPopupDialogs["ResetImprovementDialog"] = {
+			text = L["Do you want to reset your improvement data?"],
+			button1 = ACCEPT,
+			button2 = CANCEL,
+			timeout = 30,
+			whileDead = 0,
+			hideOnEscape = 1,
+			OnAccept = function()
+				mod:Reset()
+			end
+		}
+		StaticPopup_Show("ResetImprovementDialog")
 	end
 
 	function mod:Reset()
 		Skada:Wipe()
 		SkadaImprovementDB = wipe(SkadaImprovementDB or {})
-		self.db = SkadaImprovementDB
+		self.db = nil
 		self:OnInitialize()
-
-		for i = 1, #windows do
-			local win = windows[i]
-			local mode = (win and win.db) and win.db.mode or nil
-			if mode == "Improvement" or mode == "Improvement modes" or mode == "Improvement comparison" then
+		collectgarbage("collect")
+		for _, win in ipairs(Skada:GetWindows()) do
+			local mode = win.db.mode
+			if mode == L["Improvement"] or mode == L["Improvement modes"] or mode == L["Improvement comparison"] then
 				win:DisplayMode(mod)
 			end
 		end
-
 		Skada:UpdateDisplay(true)
 		Skada:Print(L["All data has been reset."])
 	end
 
 	local Default_ShowPopup = Skada.ShowPopup
 	function Skada:ShowPopup(win, force)
-		if win and win.db and win.db.mode == "Improvement" then
+		if win and win.db and win.db.mode == L["Improvement"] then
 			ask_for_reset()
 			return
 		end

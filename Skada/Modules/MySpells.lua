@@ -1,152 +1,153 @@
-local _, Skada = ...
-local Private = Skada.Private
-Skada:RegisterModule("My Spells", function(L, P)
-	local mode = Skada:NewModule("My Spells")
+local Skada = Skada
+Skada:AddLoadableModule("My Spells", function(L)
+	if Skada:IsDisabled("My Spells") then return end
+
+	local mod = Skada:NewModule(L["My Spells"])
 
 	local pairs, format = pairs, string.format
-	local userGUID, userName = Skada.userGUID, Skada.userName
-	local tooltip_school = Skada.tooltip_school
-	local PercentToRGB = Private.PercentToRGB
-	local hits_perc = "%s (\124cffffffff%s\124r)"
-
-	local function format_valuetext(d, metadata)
-		d.valuetext = Skada:FormatNumber(d.value)
-
-		if metadata and d.value > metadata.maxvalue then
-			metadata.maxvalue = d.value
-		end
-	end
+	local GetSpellInfo = Skada.GetSpellInfo or GetSpellInfo
+	local _
 
 	local function spell_tooltip(win, id, label, tooltip)
 		local set = win:GetSelectedSet()
-		local actor = set and set:GetActor(userName, userGUID)
-		if not actor then return end
+		local player = set and set:GetPlayer(Skada.userGUID, Skada.userName)
+		if not player then return end
 
 		local spell, damage = nil, nil
-		if actor.damagespells and actor.damagespells[id] then
-			spell, damage = actor.damagespells[id], true
-		elseif actor.absorbspells and actor.absorbspells[id] then
-			spell = actor.absorbspells[id]
-		elseif actor.healspells and actor.healspells[id] then
-			spell = actor.healspells[id]
+		if player.damagespells and player.damagespells[label] then
+			spell, damage = player.damagespells[label], true
+		elseif player.absorbspells and player.absorbspells[id] then
+			spell = player.absorbspells[id]
+		elseif player.healspells and player.healspells[id] then
+			spell = player.healspells[id]
 		end
 
-		if not spell then return end
+		if spell then
+			tooltip:AddLine(player.name .. " - " .. label)
+			if spell.school and Skada.spellschools[spell.school] then
+				tooltip:AddLine(
+					Skada.spellschools[spell.school].name,
+					Skada.spellschools[spell.school].r,
+					Skada.spellschools[spell.school].g,
+					Skada.spellschools[spell.school].b
+				)
+			end
 
-		tooltip:AddLine(format("%s - %s", userName, label))
-		tooltip_school(tooltip, id)
+			-- count stats
+			tooltip:AddDoubleLine(L["Hits"], spell.count, 1, 1, 1)
 
-		local cast = actor.GetSpellCast and actor:GetSpellCast(id)
-		if cast then
-			tooltip:AddDoubleLine(L["Casts"], cast, nil, nil, nil, 1, 1, 1)
-		end
+			if (spell.hit or 0) > 0 then
+				tooltip:AddDoubleLine(L["Normal Hits"], format("%s (%s)", spell.hit, Skada:FormatPercent(spell.hit, spell.count)), 1, 1, 1)
+			end
 
-		if not spell.count or spell.count == 0 then return end
+			if (spell.critical or 0) > 0 then
+				tooltip:AddDoubleLine(L["Critical Hits"], format("%s (%s)", spell.critical, Skada:FormatPercent(spell.critical, spell.count)), 1, 1, 1)
+			end
 
-		-- count stats
-		tooltip:AddDoubleLine(L["Hits"], spell.count, 1, 1, 1)
-		local amount = damage and P.absdamage and spell.total or spell.amount
-		tooltip:AddDoubleLine(L["Average"], Skada:FormatNumber(amount / spell.count), 1, 1, 1)
-
-		local uptime = actor.auras and actor.auras[id] and actor.auras[id].uptime
-		if uptime and uptime > 0 then
-			uptime = 100 * (uptime / actor:GetTime(set))
-			tooltip:AddDoubleLine(L["Uptime"], Skada:FormatPercent(uptime), 1, 1, 1, PercentToRGB(uptime))
-		end
-
-		-- overheal/overkill
-		if spell.o_amt and spell.o_amt > 0 then
-			local overamount = format(hits_perc, Skada:FormatNumber(spell.o_amt), Skada:FormatPercent(spell.o_amt, spell.amount + spell.o_amt))
-			tooltip:AddDoubleLine(damage and L["Overkill"] or L["Overheal"], overamount, 1, 0.67, 0.67)
-		end
-
-		-- normal hits
-		if spell.n_num then
 			tooltip:AddLine(" ")
-			tooltip:AddDoubleLine(L["Normal Hits"], format(hits_perc, Skada:FormatNumber(spell.n_num), Skada:FormatPercent(spell.n_num, spell.count)))
-			if spell.n_min then
-				tooltip:AddDoubleLine(L["Minimum"], Skada:FormatNumber(spell.n_min), 1, 1, 1)
-			end
-			if spell.n_max then
-				tooltip:AddDoubleLine(L["Maximum"], Skada:FormatNumber(spell.n_max), 1, 1, 1)
-			end
-			tooltip:AddDoubleLine(L["Average"], Skada:FormatNumber(spell.n_amt / spell.n_num), 1, 1, 1)
-		end
+			local amount = damage and (Skada.db.profile.absdamage and spell.total or spell.amount) or spell.amount
+			tooltip:AddDoubleLine(L["Average"], Skada:FormatNumber(amount / spell.count), 1, 1, 1)
 
-		-- critical hits
-		if spell.c_num then
-			tooltip:AddLine(" ")
-			tooltip:AddDoubleLine(L["Critical Hits"], format(hits_perc, Skada:FormatNumber(spell.c_num), Skada:FormatPercent(spell.c_num, spell.count)))
-			if spell.c_min then
-				tooltip:AddDoubleLine(L["Minimum"], Skada:FormatNumber(spell.c_min), 1, 1, 1)
+			if (spell.hitmin and spell.hitmax) or (spell.min and spell.max) then
+				local spellmin = spell.hitmin or spell.min
+				if spell.criticalmin and spell.criticalmin < spellmin then
+					spellmin = spell.criticalmin
+				end
+				local spellmax = spell.hitmax or spell.max
+				if spell.criticalmax and spell.criticalmax < spellmax then
+					spellmax = spell.criticalmax
+				end
+				tooltip:AddLine(" ")
+				tooltip:AddDoubleLine(L["Minimum Hit"], Skada:FormatNumber(spellmin), 1, 1, 1)
+				tooltip:AddDoubleLine(L["Maximum Hit"], Skada:FormatNumber(spellmax), 1, 1, 1)
+				tooltip:AddDoubleLine(L["Average Hit"], Skada:FormatNumber((spellmin + spellmax) / 2), 1, 1, 1)
 			end
-			if spell.c_max then
-				tooltip:AddDoubleLine(L["Maximum"], Skada:FormatNumber(spell.c_max), 1, 1, 1)
-			end
-			tooltip:AddDoubleLine(L["Average"], Skada:FormatNumber(spell.c_amt / spell.c_num), 1, 1, 1)
 		end
 	end
 
-	function mode:Update(win, set)
+	function mod:Update(win, set)
 		win.title = L["My Spells"]
 
-		local player = set and set:GetActor(userName, userGUID)
-		if not player then
-			return
-		elseif win.metadata then
-			win.metadata.maxvalue = 0
-		end
-
-		local nr = 0
-
-		local spells = player.damagespells -- damage spells
-		if spells then
-			for spellid, spell in pairs(spells) do
-				nr = nr + 1
-
-				local d = win:spell(nr, spellid)
-				d.value = P.absdamage and spell.total or spell.amount
-				format_valuetext(d, win.metadata)
+		local player = set and set:GetPlayer(Skada.userGUID, Skada.userName)
+		if player then
+			if win.metadata then
+				win.metadata.maxvalue = 0
 			end
-		end
 
-		spells = player.healspells -- heal spells
-		if spells then
-			for spellid, spell in pairs(spells) do
-				nr = nr + 1
+			local nr = 0
 
-				local d = win:spell(nr, spellid, true)
-				d.value = spell.amount
-				format_valuetext(d, win.metadata)
+			-- damage spells
+			if player.damagespells then
+				for spellname, spell in pairs(player.damagespells) do
+					nr = nr + 1
+					local d = win:nr(nr)
+
+					d.id = spellname
+					d.spellid = spell.id
+					d.label = spellname
+					_, _, d.icon = GetSpellInfo(spell.id)
+					d.spellschool = spell.school
+
+					d.value = Skada.db.profile.absdamage and spell.total or spell.amount
+					d.valuetext = Skada:FormatNumber(d.value)
+
+					if win.metadata and d.value > win.metadata.maxvalue then
+						win.metadata.maxvalue = d.value
+					end
+				end
 			end
-		end
 
-		spells = player.absorbspells -- absorb spells
-		if spells then
-			for spellid, spell in pairs(spells) do
-				nr = nr + 1
+			-- heal spells
+			if player.healspells then
+				for spellid, spell in pairs(player.healspells) do
+					nr = nr + 1
+					local d = win:nr(nr)
 
-				local d = win:spell(nr, spellid)
-				d.value = spell.amount
-				format_valuetext(d, win.metadata)
+					d.id = spellid
+					d.spellid = spellid
+					d.spellschool = spell.school
+					d.label, _, d.icon = GetSpellInfo(spellid)
+					if spell.ishot then
+						d.text = d.label .. L["HoT"]
+					end
+
+					d.value = spell.amount
+					d.valuetext = Skada:FormatNumber(d.value)
+
+					if win.metadata and d.value > win.metadata.maxvalue then
+						win.metadata.maxvalue = d.value
+					end
+				end
+			end
+
+			-- absorb spells
+			if player.absorbspells then
+				for spellid, spell in pairs(player.absorbspells) do
+					nr = nr + 1
+					local d = win:nr(nr)
+
+					d.id = spellid
+					d.spellid = spellid
+					d.spellschool = spell.school
+					d.label, _, d.icon = GetSpellInfo(spellid)
+
+					d.value = spell.amount
+					d.valuetext = Skada:FormatNumber(d.value)
+
+					if win.metadata and d.value > win.metadata.maxvalue then
+						win.metadata.maxvalue = d.value
+					end
+				end
 			end
 		end
 	end
 
-	function mode:OnEnable()
-		self.metadata = {
-			showspots = true,
-			tooltip = spell_tooltip,
-			icon = [[Interface\ICONS\spell_nature_lightning]]
-		}
-
-		userGUID = userGUID or Skada.userGUID
-		userName = userName or Skada.userName
-
+	function mod:OnEnable()
+		self.metadata = {showspots = true, tooltip = spell_tooltip, icon = [[Interface\Icons\spell_nature_lightning]]}
 		Skada:AddMode(self)
 	end
 
-	function mode:OnDisable()
+	function mod:OnDisable()
 		Skada:RemoveMode(self)
 	end
 end)

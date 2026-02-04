@@ -1,93 +1,91 @@
-local _, Skada = ...
-Skada:RegisterModule("Healthstones", function(L)
-	local mode = Skada:NewModule("Healthstones")
+local Skada = Skada
+Skada:AddLoadableModule("Healthstones", function(L)
+	if Skada:IsDisabled("Healthstones") then return end
+
+	local mod = Skada:NewModule(L["Healthstones"])
 	local stonename = GetSpellInfo(47874)
 	local stonespells = {
-		[27235] = true, -- Master Healthstone (2080)
-		[27236] = true, -- Master Healthstone (2288)
-		[27237] = true, -- Master Healthstone (2496)
-		[47872] = true, -- Demonic Healthstone (4200)
-		[47873] = true, -- Demonic Healthstone (3850)
-		[47874] = true, -- Demonic Healthstone (3500)
-		[47875] = true, -- Fel Healthstone (4280)
-		[47876] = true, -- Fel Healthstone (4708)
-		[47877] = true -- Fel Healthstone (5136)
+		[27235] = true,
+		[27236] = true,
+		[27237] = true,
+		[47872] = true,
+		[47873] = true,
+		[47874] = true,
+		[47875] = true,
+		[47876] = true,
+		[47877] = true
 	}
 
-	local format = string.format
-	local mode_cols = nil
-
-	local function format_valuetext(d, total, metadata)
-		d.valuetext = Skada:FormatValueCols(
-			mode_cols.Count and d.value,
-			mode_cols.Percent and Skada:FormatPercent(d.value, total)
-		)
-
-		if metadata and d.value > metadata.maxvalue then
-			metadata.maxvalue = d.value
-		end
-	end
-
-	local function log_healthstone(set, actorname, actorid, actorflags)
-		local actor = Skada:GetActor(set, actorname, actorid, actorflags)
-		if actor then
-			actor.healthstone = (actor.healthstone or 0) + 1
+	local function log_healthstone(set, playerid, playername, playerflags)
+		local player = Skada:GetPlayer(set, playerid, playername, playerflags)
+		if player then
+			player.healthstone = (player.healthstone or 0) + 1
 			set.healthstone = (set.healthstone or 0) + 1
 		end
 	end
 
-	local function stone_used(t)
-		if (t.spellid and stonespells[t.spellid]) or (t.spellname and t.spellname == stonename) then
-			Skada:DispatchSets(log_healthstone, t.srcName, t.srcGUID, t.srcFlags)
+	local used = {}
+	local function StoneUsed(_, eventtype, srcGUID, srcName, srcFlags, _, _, _, spellid, spellname)
+		if (spellid and stonespells[spellid]) or spellname and spellname == stonename then
+			Skada:DispatchSets(log_healthstone, srcGUID, srcName, srcFlags)
 		end
 	end
 
-	function mode:Update(win, set)
+	function mod:Update(win, set)
 		win.title = win.class and format("%s (%s)", L["Healthstones"], L[win.class]) or L["Healthstones"]
 
-		local total = set and set:GetTotal(win.class, nil, "healthstone")
-		if not total or total == 0 then
-			return
-		elseif win.metadata then
-			win.metadata.maxvalue = 0
-		end
+		local total = set.healthstone or 0
+		if total > 0 then
+			if win.metadata then
+				win.metadata.maxvalue = 0
+			end
 
-		local nr = 0
-		local actors = set.actors
+			local nr = 0
+			for _, player in ipairs(set.players) do
+				if (not win.class or win.class == player.class) and player.healthstone then
+					nr = nr + 1
+					local d = win:nr(nr)
 
-		for actorname, actor in pairs(actors) do
-			if win:show_actor(actor, set, true) and actor.healthstone then
-				nr = nr + 1
+					d.id = player.id or player.name
+					d.label = player.name
+					d.text = player.id and Skada:FormatName(player.name, player.id)
+					d.class = player.class
+					d.role = player.role
+					d.spec = player.spec
 
-				local d = win:actor(nr, actor, actor.enemy, actorname)
-				d.value = actor.healthstone
-				format_valuetext(d, total, win.metadata)
+					d.value = player.healthstone
+					d.valuetext = Skada:FormatValueCols(
+						self.metadata.columns.Count and d.value,
+						self.metadata.columns.Percent and Skada:FormatPercent(d.value, total)
+					)
+
+					if win.metadata and d.value > win.metadata.maxvalue then
+						win.metadata.maxvalue = d.value
+					end
+				end
 			end
 		end
 	end
 
-	function mode:GetSetSummary(set, win)
-		if not set then return end
-		return set:GetTotal(win and win.class, nil, "healthstone") or 0
-	end
-
-	function mode:OnEnable()
+	function mod:OnEnable()
 		stonename = stonename or GetSpellInfo(47874)
 		self.metadata = {
 			showspots = true,
 			ordersort = true,
-			filterclass = true,
-			columns = {Count = true, Percent = false},
-			icon = [[Interface\ICONS\inv_stone_04]]
+			click4 = Skada.FilterClass,
+			click4_label = L["Toggle Class Filter"],
+			columns = {Count = true, Percent = true},
+			icon = [[Interface\Icons\inv_stone_04]]
 		}
-
-		mode_cols = self.metadata.columns
-
-		Skada:RegisterForCL(stone_used, {src_is_interesting_nopets = true}, "SPELL_CAST_SUCCESS")
+		Skada:RegisterForCL(StoneUsed, "SPELL_CAST_SUCCESS", {src_is_interesting = true})
 		Skada:AddMode(self)
 	end
 
-	function mode:OnDisable()
+	function mod:OnDisable()
 		Skada:RemoveMode(self)
+	end
+
+	function mod:GetSetSummary(set)
+		return set.healthstone or 0
 	end
 end)

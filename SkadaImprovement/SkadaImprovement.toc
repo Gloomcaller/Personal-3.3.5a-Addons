@@ -19,8 +19,10 @@
 ## Notes-zhTW: 保存您的角色首領戰斗數據以跟踪您的進度。
 ## Dependencies: Skada
 ## SavedVariablesPerCharacter: SkadaImprovementDB
-## DefaultState: disabled
-## Author: Kader (|cff808080bkader#5341|r)
+## DefaultState: enabled
+## Author: Kader (|cff808080bkader#6361|r)
+## X-Website: https://github.com/bkader/Skada-WoTLK
+## X-Email: bkader@email.com
 
 Locales.lua
 SkadaImprovement.lua

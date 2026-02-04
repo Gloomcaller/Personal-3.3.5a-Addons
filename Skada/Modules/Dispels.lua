@@ -1,262 +1,320 @@
-local _, Skada = ...
-local Private = Skada.Private
-Skada:RegisterModule("Dispels", function(L, P, _, C)
-	local mode = Skada:NewModule("Dispels")
-	local mode_extraspell = mode:NewModule("Spell List")
-	local mode_target = mode:NewModule("Target List")
-	local mode_spell = mode:NewModule("Dispel Spells")
-	local classfmt = Skada.classcolors.format
-	local ignored_spells = Skada.ignored_spells.dispel -- Edit Skada\Core\Tables.lua
-	local get_actor_dispelled_spells = nil
-	local get_actor_dispelled_targets = nil
+local Skada = Skada
+Skada:AddLoadableModule("Dispels", function(L)
+	if Skada:IsDisabled("Dispels") then return end
+
+	local mod = Skada:NewModule(L["Dispels"])
+	local spellmod = mod:NewModule(L["Dispelled spell list"])
+	local targetmod = mod:NewModule(L["Dispelled target list"])
+	local playermod = mod:NewModule(L["Dispel spell list"])
+	local ignoredSpells = Skada.dummyTable -- Edit Skada\Core\Tables.lua
 
 	-- cache frequently used globals
-	local pairs, format = pairs, string.format
-	local uformat, new, clear = Private.uformat, Private.newTable, Private.clearTable
-	local mode_cols = nil
+	local pairs, ipairs, tostring, format = pairs, ipairs, tostring, string.format
+	local GetSpellInfo = Skada.GetSpellInfo or GetSpellInfo
+	local _
 
-	local function format_valuetext(d, total, metadata, subview)
-		d.valuetext = Skada:FormatValueCols(
-			mode_cols.Count and d.value,
-			mode_cols[subview and "sPercent" or "Percent"] and Skada:FormatPercent(d.value, total)
-		)
+	local function log_dispel(set, data)
+		local player = Skada:GetPlayer(set, data.playerid, data.playername, data.playerflags)
+		if player then
+			-- increment player's and set's dispels count
+			player.dispel = (player.dispel or 0) + 1
+			set.dispel = (set.dispel or 0) + 1
 
-		if metadata and d.value > metadata.maxvalue then
-			metadata.maxvalue = d.value
-		end
-	end
+			-- saving this to total set may become a memory hog deluxe.
+			if set ~= Skada.total and data.spellid then
+				local spell = player.dispelspells and player.dispelspells[data.spellid]
+				if not spell then
+					player.dispelspells = player.dispelspells or {}
+					player.dispelspells[data.spellid] = {count = 0}
+					spell = player.dispelspells[data.spellid]
+				end
+				spell.count = spell.count + 1
 
-	local dispel = {}
-	local function log_dispel(set)
-		local actor = Skada:GetActor(set, dispel.actorname, dispel.actorid, dispel.actorflags)
-		if not actor then return end
+				-- the dispelled spell
+				if data.extraspellid then
+					spell.spells = spell.spells or {}
+					spell.spells[data.extraspellid] = (spell.spells[data.extraspellid] or 0) + 1
+				end
 
-		-- increment actor's and set's dispels count
-		actor.dispel = (actor.dispel or 0) + 1
-		set.dispel = (set.dispel or 0) + 1
-
-		-- saving this to total set may become a memory hog deluxe.
-		if (set == Skada.total and not P.totalidc) or not dispel.spellid then return end
-
-		local spell = actor.dispelspells and actor.dispelspells[dispel.spellid]
-		if not spell then
-			actor.dispelspells = actor.dispelspells or {}
-			actor.dispelspells[dispel.spellid] = {count = 1}
-			spell = actor.dispelspells[dispel.spellid]
-		else
-			spell.count = spell.count + 1
-		end
-
-		-- the dispelled spell
-		if dispel.extraspellid then
-			spell.spells = spell.spells or {}
-			spell.spells[dispel.extraspellid] = (spell.spells[dispel.extraspellid] or 0) + 1
-		end
-
-		-- the dispelled target
-		if dispel.dstName then
-			spell.targets = spell.targets or {}
-			spell.targets[dispel.dstName] = (spell.targets[dispel.dstName] or 0) + 1
-		end
-	end
-
-	local function spell_dispel(t)
-		if t.spellid and not ignored_spells[t.spellid] and not ignored_spells[t.extraspellid] then
-			dispel.actorid = t.srcGUID
-			dispel.actorname = t.srcName
-			dispel.actorflags = t.srcFlags
-
-			dispel.dstName = Skada:FixPetsName(t.dstGUID, t.dstName, t.dstFlags)
-			dispel.spellid = t.spellstring
-			dispel.extraspellid = t.extrastring
-
-			Skada:FixPets(dispel)
-			Skada:DispatchSets(log_dispel)
-		end
-	end
-
-	function mode_extraspell:Enter(win, id, label, class)
-		win.actorid, win.actorname, win.actorclass = id, label, class
-		win.title = format(L["%s's dispelled spells"], classfmt(class, label))
-	end
-
-	function mode_extraspell:Update(win, set)
-		win.title = uformat(L["%s's dispelled spells"], classfmt(win.actorclass, win.actorname))
-
-		local spells, total, actor = get_actor_dispelled_spells(set, win.actorname, win.actorid)
-		if not spells then
-			return
-		elseif win.metadata then
-			win.metadata.maxvalue = 0
-		end
-
-		local nr = 0
-		for spellid, count in pairs(spells) do
-			nr = nr + 1
-
-			local d = win:spell(nr, spellid)
-			d.value = count
-			format_valuetext(d, total, win.metadata, true)
-		end
-	end
-
-	function mode_target:Enter(win, id, label, class)
-		win.actorid, win.actorname, win.actorclass = id, label, class
-		win.title = format(L["%s's targets"], classfmt(class, label))
-	end
-
-	function mode_target:Update(win, set)
-		win.title = uformat(L["%s's targets"], classfmt(win.actorclass, win.actorname))
-
-		local targets, total, actor = get_actor_dispelled_targets(set, win.actorname, win.actorid)
-		if not targets or not actor or total == 0 then
-			return
-		elseif win.metadata then
-			win.metadata.maxvalue = 0
-		end
-
-		local nr = 0
-		for targetname, target in pairs(targets) do
-			nr = nr + 1
-
-			local d = win:actor(nr, target, target.enemy, targetname)
-			d.value = target.count
-			format_valuetext(d, total, win.metadata, true)
-		end
-	end
-
-	function mode_spell:Enter(win, id, label, class)
-		win.actorid, win.actorname, win.actorclass = id, label, class
-		win.title = format(L["%s's spells"], classfmt(class, label))
-	end
-
-	function mode_spell:Update(win, set)
-		win.title = uformat(L["%s's spells"], classfmt(win.actorclass, win.actorname))
-
-		local actor = set and set:GetActor(win.actorname, win.actorid)
-		local total = actor and actor.dispel
-		local spells = (total and total > 0) and actor.dispelspells
-
-		if not spells then
-			return
-		elseif win.metadata then
-			win.metadata.maxvalue = 0
-		end
-
-		local nr = 0
-		for spellid, spell in pairs(spells) do
-			nr = nr + 1
-
-			local d = win:spell(nr, spellid)
-			d.value = spell.count
-			format_valuetext(d, total, win.metadata, true)
-		end
-	end
-
-	function mode:Update(win, set)
-		win.title = win.class and format("%s (%s)", L["Dispels"], L[win.class]) or L["Dispels"]
-
-		local total = set and set:GetTotal(win.class, nil, "dispel")
-		if not total or total == 0 then
-			return
-		elseif win.metadata then
-			win.metadata.maxvalue = 0
-		end
-
-		local nr = 0
-		local actors = set.actors
-
-		for actorname, actor in pairs(actors) do
-			if win:show_actor(actor, set, true) and actor.dispel then
-				nr = nr + 1
-
-				local d = win:actor(nr, actor, actor.enemy, actorname)
-				d.value = actor.dispel
-				format_valuetext(d, total, win.metadata)
+				-- the dispelled target
+				if data.dstName then
+					local actor = Skada:GetActor(set, data.dstGUID, data.dstName, data.dstFlags)
+					if actor then
+						spell.targets = spell.targets or {}
+						spell.targets[data.dstName] = (spell.targets[data.dstName] or 0) + 1
+					end
+				end
 			end
 		end
 	end
 
-	function mode:GetSetSummary(set, win)
-		if not set then return end
-		local value = set:GetTotal(win and win.class, nil, "dispel") or 0
-		return value, Skada:FormatNumber(value)
+	local data = {}
+
+	local function SpellDispel(timestamp, eventtype, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, ...)
+		data.spellid, _, _, data.extraspellid = ...
+		data.extraspellid = data.extraspellid or 6603
+
+		-- invalid/ignored spell?
+		if (data.spellid and ignoredSpells[data.spellid]) or ignoredSpells[data.extraspellid] then return end
+
+		data.playerid = srcGUID
+		data.playername = srcName
+		data.playerflags = srcFlags
+
+		data.dstGUID = dstGUID
+		data.dstName = dstName
+		data.dstFlags = dstFlags
+
+		Skada:DispatchSets(log_dispel, data)
+		log_dispel(Skada.total, data)
 	end
 
-	function mode:AddToTooltip(set, tooltip)
-		if set.dispel and set.dispel > 0 then
+	function spellmod:Enter(win, id, label)
+		win.actorid, win.actorname = id, label
+		win.title = format(L["%s's dispelled spells"], label)
+	end
+
+	function spellmod:Update(win, set)
+		win.title = format(L["%s's dispelled spells"], win.actorname or L.Unknown)
+
+		local player = set and set:GetPlayer(win.actorid, win.actorname)
+		local total = player and player.dispel or 0
+		local spells = (total > 0) and player:GetDispelledSpells()
+
+		if spells and total > 0 then
+			if win.metadata then
+				win.metadata.maxvalue = 0
+			end
+
+			local nr = 0
+			for spellid, count in pairs(spells) do
+				nr = nr + 1
+
+				local d = win:nr(nr)
+
+				d.id = spellid
+				d.spellid = spellid
+				d.label, _, d.icon = GetSpellInfo(spellid)
+
+				d.value = count
+				d.valuetext = Skada:FormatValueCols(
+					mod.metadata.columns.Count and d.value,
+					mod.metadata.columns.sPercent and Skada:FormatPercent(d.value, total)
+				)
+
+				if win.metadata and d.value > win.metadata.maxvalue then
+					win.metadata.maxvalue = d.value
+				end
+			end
+		end
+	end
+
+	function targetmod:Enter(win, id, label)
+		win.actorid, win.actorname = id, label
+		win.title = format(L["%s's dispelled targets"], label)
+	end
+
+	function targetmod:Update(win, set)
+		win.title = format(L["%s's dispelled targets"], win.actorname or L.Unknown)
+
+		local player = set and set:GetPlayer(win.actorid, win.actorname)
+		local total = player and player.dispel or 0
+		local targets = (total > 0) and player:GetDispelledTargets()
+
+		if targets and total > 0 then
+			if win.metadata then
+				win.metadata.maxvalue = 0
+			end
+
+			local nr = 0
+			for targetname, target in pairs(targets) do
+				nr = nr + 1
+
+				local d = win:nr(nr)
+
+				d.id = target.id or targetname
+				d.label = targetname
+				d.class = target.class
+				d.role = target.role
+				d.spec = target.spec
+
+				d.value = target.count
+				d.valuetext = Skada:FormatValueCols(
+					mod.metadata.columns.Count and d.value,
+					mod.metadata.columns.sPercent and Skada:FormatPercent(d.value, total)
+				)
+
+				if win.metadata and d.value > win.metadata.maxvalue then
+					win.metadata.maxvalue = d.value
+				end
+			end
+		end
+	end
+
+	function playermod:Enter(win, id, label)
+		win.actorid, win.actorname = id, label
+		win.title = format(L["%s's dispel spells"], label)
+	end
+
+	function playermod:Update(win, set)
+		win.title = format(L["%s's dispel spells"], win.actorname or L.Unknown)
+
+		local player = set and set:GetPlayer(win.actorid, win.actorname)
+		local total = player and player.dispel or 0
+
+		if total > 0 and player.dispelspells then
+			if win.metadata then
+				win.metadata.maxvalue = 0
+			end
+
+			local nr = 0
+			for spellid, spell in pairs(player.dispelspells) do
+				nr = nr + 1
+
+				local d = win:nr(nr)
+
+				d.id = spellid
+				d.spellid = spellid
+				d.label, _, d.icon = GetSpellInfo(spellid)
+
+				d.value = spell.count
+				d.valuetext = Skada:FormatValueCols(
+					mod.metadata.columns.Count and d.value,
+					mod.metadata.columns.sPercent and Skada:FormatPercent(d.value, total)
+				)
+
+				if win.metadata and d.value > win.metadata.maxvalue then
+					win.metadata.maxvalue = d.value
+				end
+			end
+		end
+	end
+
+	function mod:Update(win, set)
+		win.title = win.class and format("%s (%s)", L["Dispels"], L[win.class]) or L["Dispels"]
+
+		local total = set.dispel or 0
+		if total > 0 then
+			if win.metadata then
+				win.metadata.maxvalue = 0
+			end
+
+			local nr = 0
+			for _, player in ipairs(set.players) do
+				if (not win.class or win.class == player.class) and (player.dispel or 0) > 0 then
+					nr = nr + 1
+
+					local d = win:nr(nr)
+
+					d.id = player.id or player.name
+					d.label = player.name
+					d.text = player.id and Skada:FormatName(player.name, player.id)
+					d.class = player.class
+					d.spec = player.spec
+					d.role = player.role
+
+					d.value = player.dispel
+					d.valuetext = Skada:FormatValueCols(
+						self.metadata.columns.Count and d.value,
+						self.metadata.columns.Percent and Skada:FormatPercent(d.value, total)
+					)
+
+					if win.metadata and d.value > win.metadata.maxvalue then
+						win.metadata.maxvalue = d.value
+					end
+				end
+			end
+		end
+	end
+
+	function mod:OnEnable()
+		self.metadata = {
+			showspots = true,
+			ordersort = true,
+			click1 = spellmod,
+			click2 = targetmod,
+			click3 = playermod,
+			click4 = Skada.FilterClass,
+			click4_label = L["Toggle Class Filter"],
+			nototalclick = {spellmod, targetmod, playermod},
+			columns = {Count = true, Percent = true, sPercent = true},
+			icon = [[Interface\Icons\spell_holy_dispelmagic]]
+		}
+
+		Skada:RegisterForCL(
+			SpellDispel,
+			"SPELL_DISPEL",
+			"SPELL_STOLEN",
+			{src_is_interesting = true}
+		)
+
+		Skada:AddMode(self)
+
+		-- table of ignored spells:
+		if Skada.ignoredSpells and Skada.ignoredSpells.dispels then
+			ignoredSpells = Skada.ignoredSpells.dispels
+		end
+	end
+
+	function mod:OnDisable()
+		Skada:RemoveMode(self)
+	end
+
+	function mod:AddToTooltip(set, tooltip)
+		if set and (set.dispel or 0) > 0 then
 			tooltip:AddDoubleLine(L["Dispels"], set.dispel, 1, 1, 1)
 		end
 	end
 
-	function mode:OnEnable()
-		self.metadata = {
-			showspots = true,
-			ordersort = true,
-			filterclass = true,
-			click1 = mode_target,
-			click2 = mode_extraspell,
-			click3 = mode_spell,
-			columns = {Count = true, Percent = false, sPercent = false},
-			icon = [[Interface\ICONS\spell_holy_dispelmagic]]
-		}
-
-		mode_cols = self.metadata.columns
-
-		-- no total click.
-		mode_extraspell.nototal = true
-		mode_target.nototal = true
-		mode_spell.nototal = true
-
-		Skada:RegisterForCL(spell_dispel, {src_is_interesting = true}, "SPELL_DISPEL", "SPELL_STOLEN")
-		Skada:AddMode(self)
+	function mod:GetSetSummary(set)
+		return tostring(set.dispel or 0), set.dispel or 0
 	end
 
-	function mode:OnDisable()
-		Skada:RemoveMode(self)
-	end
+	do
+		local playerPrototype = Skada.playerPrototype
+		local wipe = wipe
 
-	---------------------------------------------------------------------------
-
-	get_actor_dispelled_spells = function(self, name, id, tbl)
-		local actor = self:GetActor(name, id)
-		local total = actor and actor.dispel
-		local spells = total and total > 0 and actor.dispelspells
-		if not spells then return end
-
-		tbl = clear(tbl or C)
-		for _, spell in pairs(spells) do
-			if spell.spells then
-				for spellid, count in pairs(spell.spells) do
-					tbl[spellid] = (tbl[spellid] or 0) + count
-				end
-			end
-		end
-		return tbl, total, actor
-	end
-
-	get_actor_dispelled_targets = function(self, name, id, tbl)
-		local actor = self:GetActor(name, id)
-		local total = actor and actor.dispel
-		local spells = total and total > 0 and actor.dispelspells
-		if not spells then return end
-
-		tbl = clear(tbl or C)
-		for _, spell in pairs(spells) do
-			if spell.targets then
-				for targetname, count in pairs(spell.targets) do
-					local t = tbl[targetname]
-					if not t then
-						t = new()
-						t.count = count
-						tbl[targetname] = t
-					else
-						t.count = t.count + count
+		function playerPrototype:GetDispelledSpells(tbl)
+			if self.dispelspells then
+				tbl = wipe(tbl or Skada.cacheTable)
+				for _, spell in pairs(self.dispelspells) do
+					if spell.spells then
+						for spellid, count in pairs(spell.spells) do
+							tbl[spellid] = (tbl[spellid] or 0) + count
+						end
 					end
-					self:_fill_actor_table(t, targetname, nil, true)
 				end
+				return tbl
 			end
 		end
-		return tbl, total, actor
+
+		function playerPrototype:GetDispelledTargets(tbl)
+			if self.dispelspells then
+				tbl = wipe(tbl or Skada.cacheTable)
+				for _, spell in pairs(self.dispelspells) do
+					if spell.targets then
+						for name, count in pairs(spell.targets) do
+							if not tbl[name] then
+								tbl[name] = {count = count}
+							else
+								tbl[name].count = tbl[name].count + count
+							end
+							if not tbl[name].class then
+								local actor = self.super:GetActor(name)
+								if actor then
+									tbl[name].id = actor.id
+									tbl[name].class = actor.class
+									tbl[name].role = actor.role
+									tbl[name].spec = actor.spec
+								else
+									tbl[name].class = "UNKNOWN"
+								end
+							end
+						end
+					end
+				end
+				return tbl
+			end
+		end
 	end
 end)

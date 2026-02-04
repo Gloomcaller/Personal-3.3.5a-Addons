@@ -10,7 +10,7 @@ local Atr_orig_WOWEcon_Scan_AH;
 -----------------------------------------
 
 
-local function Atr_RecipeKnown_EventScan (...)
+local function Atr_RecipeKnown_EventScan (rkSelf, rkEvent, rkArg1)
 
 	if (event == "AUCTION_ITEM_LIST_UPDATE") then
 
@@ -24,12 +24,12 @@ local function Atr_RecipeKnown_EventScan (...)
 		end
 	end
 
-	Atr_orig_RecipeKnown_EventScan (...);
+	Atr_orig_RecipeKnown_EventScan (rkSelf, rkEvent, rkArg1);
 end
 
 -----------------------------------------
 
-local function Atr_LootLink_OnEvent (...)
+local function Atr_LootLink_OnEvent ()
 
 	if (event == "AUCTION_ITEM_LIST_UPDATE") then
 
@@ -43,12 +43,12 @@ local function Atr_LootLink_OnEvent (...)
 		end
 	end
 
-	Atr_orig_LootLink_OnEvent (...);
+	Atr_orig_LootLink_OnEvent ();
 end
 
 -----------------------------------------
 
-local function Atr_WOWEcon_Scan_AH (...)
+local function Atr_WOWEcon_Scan_AH ()
 
 	if (Atr_IsTabSelected()) then
 		return;
@@ -59,7 +59,7 @@ local function Atr_WOWEcon_Scan_AH (...)
 		return;
 	end
 
-	Atr_orig_WOWEcon_Scan_AH (...);
+	Atr_orig_WOWEcon_Scan_AH ();
 end
 
 
