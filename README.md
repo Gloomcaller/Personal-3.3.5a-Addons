@@ -60,6 +60,7 @@ A curated collection of World of Warcraft: Wrath of the Lich King (3.3.5a) addon
 ## Important Notes
 - **Client Version:** This collection is specifically for **WotLK 3.3.5a** (client build 12340)
 - **Backup:** Consider backing up your `WTF` folder if you want to preserve your existing settings
+- **Alt Sources** If any of the CurseForge links stop working search for addons on [Felbite](https://felbite.com/)
 - **Blizz Files:** Blizzards addon folders in the main Addon folder should not be deleted if you don't know what you are doing
 - **Updates:** This repository is updated periodically - check back for new versions
 - **Compatibility:** All addons are tested together for compatibility
