@@ -51,7 +51,6 @@ A curated collection of World of Warcraft: Wrath of the Lich King (3.3.5a) addon
 | **Overachiever** | Achievement helper | [CurseForge](https://www.curseforge.com/wow/addons/overachiever) / [Felbite](https://felbite.com/addon/4269-overachiever/) |
 | **Postal** | Enhanced mail management | [CurseForge](https://www.curseforge.com/wow/addons/postal) / [Felbite](https://felbite.com/addon/4545-postal/) |
 | **Questie** | Quest helper and tracker | [Questie](https://github.com/Questie/Questie) / [Felbite](https://felbite.com/addon/3349-questie/) |
-| **SilverDragon** | Rare mob scanner | [CurseForge](https://www.curseforge.com/wow/addons/silver-dragon) / [Felbite](https://felbite.com/addon/4731-silverdragon/) |
 | **Skada** | Damage/healing meter | [CurseForge](https://www.curseforge.com/wow/addons/skada) / [Felbite](https://felbite.com/addon/4726-skada/) |
 | **Talented** | Talent tree editor | [CurseForge](https://www.curseforge.com/wow/addons/talented) / [Felbite](https://felbite.com/addon/4354-talented/) |
 
