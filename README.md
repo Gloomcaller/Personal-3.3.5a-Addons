@@ -43,6 +43,7 @@ A curated collection of World of Warcraft: Wrath of the Lich King (3.3.5a) addon
 | **AutoVendor** | Auto-repair and junk seller at vendors | [CurseForge](https://www.curseforge.com/wow/addons/autovendor) / [Felbite](https://felbite.com/addon/4227-autovendor/) |
 | **Bagnon** | Unified bag and bank interface | [CurseForge](https://www.curseforge.com/wow/addons/bagnon) / [Felbite](https://felbite.com/addon/4857-bagnon/) |
 | **BonusScanner** | Scans and sums item bonuses | [CurseForge](https://www.curseforge.com/wow/addons/bonusscanner) / [Felbite](https://felbite.com/addon/3946-bonusscannercontinued/) |
+| **CompactRaidFrame** | Lightweight, compact raid frames | [Felbite](https://felbite.com/addon/3271-compactraidframe/) |
 | **Cromulent** | Item level and more | [CurseForge](https://www.curseforge.com/wow/addons/cromulent) / [Felbite](https://felbite.com/addon/4119-cromulent/) |
 | **DBM (Deadly Boss Mods)** | Raid and dungeon boss timers | [Deadly Boss Mods](https://www.deadlybossmods.com/) / [Felbite](https://felbite.com/addon/4828-deadlybossmods/) |
 | **FishermansFriend** | Fishing helper | [CurseForge](https://www.curseforge.com/wow/addons/fishermansfriend) / [Felbite](https://felbite.com/addon/4083-fishermansfriend/) |
@@ -51,6 +52,7 @@ A curated collection of World of Warcraft: Wrath of the Lich King (3.3.5a) addon
 | **Overachiever** | Achievement helper | [CurseForge](https://www.curseforge.com/wow/addons/overachiever) / [Felbite](https://felbite.com/addon/4269-overachiever/) |
 | **Postal** | Enhanced mail management | [CurseForge](https://www.curseforge.com/wow/addons/postal) / [Felbite](https://felbite.com/addon/4545-postal/) |
 | **Questie** | Quest helper and tracker | [Questie](https://github.com/Questie/Questie) / [Felbite](https://felbite.com/addon/3349-questie/) |
+| **SilverDragon** | Rare mob alert and tracker | [CurseForge](https://www.curseforge.com/wow/addons/silver-dragon) / [Felbite](https://felbite.com/addon/4731-silverdragon/) |
 | **Skada** | Damage/healing meter | [CurseForge](https://www.curseforge.com/wow/addons/skada) / [Felbite](https://felbite.com/addon/4726-skada/) |
 | **Talented** | Talent tree editor | [CurseForge](https://www.curseforge.com/wow/addons/talented) / [Felbite](https://felbite.com/addon/4354-talented/) |
 
