@@ -1,0 +1,8 @@
+## Interface: 30300
+## Title: ICC Journal
+## Notes: A professional ICC boss guide styled like the Spellbook.
+## Author: Gemini
+## Version: 1.0
+
+ICCJournal.xml
+ICCJournal.lua

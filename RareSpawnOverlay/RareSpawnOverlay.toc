@@ -1,0 +1,14 @@
+## Interface: 30300
+## Title: Rare Spawn Overlay
+## Author: Keith Gabryelski, Fixed by Kanaye for 3.3.5
+## Notes: World Map Overlay for rare NPC's
+## Version: 4.2.30300
+## X-Date: Sept 5, 2010
+## SavedVariables: RareSpawnOverlayOptions
+# 
+RareSpawnOverlay.lua
+RSO-MapManager.lua
+RSO-SpawnData.lua
+RSO-OverlayManager.lua
+RSO-Options.xml
+RSO-API.lua

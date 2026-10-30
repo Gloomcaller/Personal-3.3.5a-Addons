@@ -1,0 +1,82 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+    <Frame name="ICCJournalFrame" parent="UIParent" hidden="true" movable="true" enableMouse="true">
+        <Size x="600" y="660"/> 
+        <Anchors><Anchor point="CENTER"/></Anchors>
+        
+        <Backdrop bgFile="Interface\Buttons\UI-SliderBar-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+            <EdgeSize val="16"/><TileSize val="16"/>
+            <BackgroundInsets left="4" right="4" top="4" bottom="4"/>
+        </Backdrop>
+
+        <Layers>
+            <Layer level="BACKGROUND">
+                <Texture setAllPoints="true">
+                    <Color r="0" g="0" b="0" a="0.8"/> 
+                </Texture>
+            </Layer>
+            <Layer level="ARTWORK">
+                <FontString name="$parentTitle" inherits="GameFontNormalLarge" text="Icecrown Citadel Journal">
+                    <Anchors><Anchor point="TOP" x="0" y="-15"/></Anchors>
+                </FontString>
+                <FontString name="ICCJournalSubtitle" inherits="GameFontHighlightSmall">
+                    <Anchors><Anchor point="TOP" x="0" y="-35"/></Anchors>
+                </FontString>
+            </Layer>
+        </Layers>
+
+        <Frames>
+            <Button name="$parentCloseButton" inherits="UIPanelCloseButton">
+                <Anchors><Anchor point="TOPRIGHT" x="-2" y="-2"/></Anchors>
+            </Button>
+
+            <Frame name="ICCJournalContentBox">
+                <Anchors>
+                    <Anchor point="TOPLEFT" x="20" y="-60"/>
+                    <Anchor point="BOTTOMRIGHT" x="-85" y="70"/> 
+                </Anchors>
+                <Layers>
+                    <Layer level="BACKGROUND">
+                        <Texture setAllPoints="true">
+                            <Color r="0.22" g="0.16" b="0.11" a="0.9"/>
+                        </Texture>
+                    </Layer>
+                </Layers>
+                <Backdrop edgeFile="Interface\Buttons\UI-SliderBar-Border" tile="true">
+                    <EdgeSize val="12"/>
+                </Backdrop>
+
+                <Frames>
+                   <ScrollFrame name="ICCJournalScrollFrame" inherits="UIPanelScrollFrameTemplate">
+    <Anchors>
+        <Anchor point="TOPLEFT" x="12" y="-12"/>
+        <Anchor point="BOTTOMRIGHT" x="-30" y="12"/>
+    </Anchors>
+    <ScrollChild>
+        <Frame name="ICCJournalScrollChild">
+            <Size x="410" y="1"/> <Layers>
+                <Layer level="ARTWORK">
+                    <FontString name="ICCJournalText" inherits="GameFontHighlightMedium" justifyH="LEFT" justifyV="TOP">
+                        <Size x="410" y="0"/> <Anchors>
+                            <Anchor point="TOPLEFT" x="5" y="-5"/>
+                        </Anchors>
+                    </FontString>
+                </Layer>
+            </Layers>
+        </Frame>
+    </ScrollChild>
+</ScrollFrame>
+                </Frames>
+            </Frame>
+
+            <Frame name="ICCJournalDifficultyContainer" parentKey="DiffContainer">
+                <Size x="500" y="40"/>
+                <Anchors><Anchor point="BOTTOM" x="-35" y="15"/></Anchors>
+            </Frame>
+        </Frames>
+        <Scripts>
+            <OnLoad>self:RegisterForDrag("LeftButton");</OnLoad>
+            <OnMouseDown>self:StartMoving();</OnMouseDown>
+            <OnMouseUp>self:StopMovingOrSizing();</OnMouseUp>
+        </Scripts>
+    </Frame>
+</Ui>
