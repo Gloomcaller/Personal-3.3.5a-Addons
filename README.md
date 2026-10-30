@@ -31,30 +31,34 @@ A curated collection of World of Warcraft: Wrath of the Lich King (3.3.5a) addon
 
 ## Addon List
 
-| Addon | Description | Official Source |
-|-------|-------------|-----------------|
-| **ACP** (Addon Control Panel) | Manage addons without relogging | [CurseForge](https://www.curseforge.com/wow/addons/acp) / [Felbite](https://felbite.com/addon/4688-addoncontrolpanel/) |
-| **AckisRecipeList** | Tracks missing recipes | [CurseForge](https://www.curseforge.com/wow/addons/ackis-recipe-list) / [Felbite](https://felbite.com/addon/4885-ackisrecipelist/) |
-| **AdvancedTradeSkillWindow** | Enhanced profession window | [CurseForge](https://www.curseforge.com/wow/addons/advanced-tradeskill-window) / [Felbite](https://felbite.com/addon/4093-advancedtradeskillwindow/) |
-| **AllStats** | Detailed character statistics | [CurseForge](https://www.curseforge.com/wow/addons/allstats) / [Felbite](https://felbite.com/addon/3884-all-stats/) |
-| **Atlas** | Dungeon maps | [CurseForge](https://www.curseforge.com/wow/addons/atlas) |
-| **AtlasLoot** | Loot tables | [CurseForge](https://www.curseforge.com/wow/addons/atlasloot-enhanced) / [Felbite](https://felbite.com/addon/4873-atlaslootenhanced/) |
-| **Auctionator** | Simplified auction house interface | [CurseForge](https://www.curseforge.com/wow/addons/auctionator) / [Felbite](https://felbite.com/addon/4868-auctionator/) |
-| **AutoVendor** | Auto-repair and junk seller at vendors | [CurseForge](https://www.curseforge.com/wow/addons/autovendor) / [Felbite](https://felbite.com/addon/4227-autovendor/) |
-| **Bagnon** | Unified bag and bank interface | [CurseForge](https://www.curseforge.com/wow/addons/bagnon) / [Felbite](https://felbite.com/addon/4857-bagnon/) |
-| **BonusScanner** | Scans and sums item bonuses | [CurseForge](https://www.curseforge.com/wow/addons/bonusscanner) / [Felbite](https://felbite.com/addon/3946-bonusscannercontinued/) |
-| **CompactRaidFrame** | Lightweight, compact raid frames | [Felbite](https://felbite.com/addon/3271-compactraidframe/) |
-| **Cromulent** | Item level and more | [CurseForge](https://www.curseforge.com/wow/addons/cromulent) / [Felbite](https://felbite.com/addon/4119-cromulent/) |
-| **DBM (Deadly Boss Mods)** | Raid and dungeon boss timers | [Deadly Boss Mods](https://www.deadlybossmods.com/) / [Felbite](https://felbite.com/addon/4828-deadlybossmods/) |
-| **FishermansFriend** | Fishing helper | [CurseForge](https://www.curseforge.com/wow/addons/fishermansfriend) / [Felbite](https://felbite.com/addon/4083-fishermansfriend/) |
-| **GTFO** | Audio alerts for standing in bad stuff | [CurseForge](https://www.curseforge.com/wow/addons/gtfo) / [Felbite](https://felbite.com/addon/4340-gtfo/) |
-| **GearScoreLite** | Lightweight gear scoring | [CurseForge](https://www.curseforge.com/wow/addons/gearscore) / [Felbite](https://felbite.com/addon/4799-gearscorelite/) |
-| **Overachiever** | Achievement helper | [CurseForge](https://www.curseforge.com/wow/addons/overachiever) / [Felbite](https://felbite.com/addon/4269-overachiever/) |
-| **Postal** | Enhanced mail management | [CurseForge](https://www.curseforge.com/wow/addons/postal) / [Felbite](https://felbite.com/addon/4545-postal/) |
-| **Questie** | Quest helper and tracker | [Questie](https://github.com/Questie/Questie) / [Felbite](https://felbite.com/addon/3349-questie/) |
-| **SilverDragon** | Rare mob alert and tracker | [CurseForge](https://www.curseforge.com/wow/addons/silver-dragon) / [Felbite](https://felbite.com/addon/4731-silverdragon/) |
-| **Skada** | Damage/healing meter | [CurseForge](https://www.curseforge.com/wow/addons/skada) / [Felbite](https://felbite.com/addon/4726-skada/) |
-| **Talented** | Talent tree editor | [CurseForge](https://www.curseforge.com/wow/addons/talented) / [Felbite](https://felbite.com/addon/4354-talented/) |
+| Addon                         | Description                                  | Official Source                                                                                                                               |
+| :---------------------------- | :------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ACP** (Addon Control Panel) | Manage addons without relogging              | [CurseForge](https://legacy.curseforge.com/wow/addons/acp) / [Warperia](https://warperia.com/addon-wotlk/addon-control-panel-2/)              |
+| **AckisRecipeList**           | Tracks missing recipes                       | [CurseForge](https://www.curseforge.com/wow/addons/arl) / [GitHub](https://github.com/Sweepi/ARL_WotLK)                                       |
+| **AdvancedTradeSkillWindow**  | Enhanced profession window                   | [CurseForge](https://www.curseforge.com/wow/addons/advanced-trade-skill-window) / [GitHub](https://github.com/Ilast/AdvancedTradeSkillWindow) |
+| **AllStats**                  | Detailed character statistics                | [CurseForge](https://www.curseforge.com/wow/addons/allstats) / [Warperia](https://warperia.com/addon-wotlk/all-stats/)                        |
+| **Atlas**                     | Dungeon maps                                 | [CurseForge](https://legacy.curseforge.com/wow/addons/atlas) / [Warperia](https://warperia.com/addon-wotlk/atlas/)                            |
+| **AtlasLoot**                 | Loot tables                                  | [CurseForge](https://www.curseforge.com/wow/addons/atlaslootclassic) / [Warperia](https://warperia.com/addon-wotlk/atlasloot/)                |
+| **Auctionator**               | Simplified auction house interface           | [CurseForge](https://legacy.curseforge.com/wow/addons/auctionator) / [Warperia](https://warperia.com/addon-wotlk/auctionator/)                |
+| **AutoVendor**                | Auto-repair and junk seller at vendors       | [CurseForge](https://www.curseforge.com/wow/addons/autovendor) / [WowAce](https://www.wowace.com/projects/autovendor)                         |
+| **Bagnon**                    | Unified bag and bank interface               | [CurseForge](https://legacy.curseforge.com/wow/addons/bagnon) / [WowAce](https://www.wowace.com/projects/bagnon)                              |
+| **BonusScanner**              | Scans and sums item bonuses                  | [Warperia](https://warperia.com/addon-wotlk/bonusscanner-continued/)                                                                          |
+| **Cheese**                    | Cataclysm-style spell proc overlays          | [CurseForge](https://www.curseforge.com/wow/addons/cheese) / [Warperia](https://warperia.com/addon-wotlk/cheese-fixed/)                       |
+| **CompactRaidFrame**          | Backport of retail-style compact raid frames | [Warperia](https://warperia.com/addon-wotlk/compactraidframe/) / [GitHub](https://github.com/RomanSpector/CompactRaidFrame)                   |
+| **Cromulent**                 | Item level and more                          | [CurseForge](https://legacy.curseforge.com/wow/addons/cromulent) / [Warperia](https://warperia.com/addon-wotlk/cromulent/)                    |
+| **DBM (Deadly Boss Mods)**    | Raid and dungeon boss timers                 | [CurseForge](https://www.curseforge.com/wow/addons/deadly-boss-mods-wotlk) / [Warperia](https://warperia.com/addon-wotlk/dbm-warmane/)        |
+| **DisplayDungeon**            | Shows RDF queue status below the minimap     | [Warperia](https://warperia.com/addon-wotlk/displaydungeon/) / [CurseForge](https://www.curseforge.com/wow/addons/displaydungeon)             |
+| **FishermansFriend**          | Fishing helper                               | [WowAce](https://www.wowace.com/projects/fishermans-friend) / [Warperia](https://warperia.com/addon-wotlk/fishermans-friend/)                 |
+| **GTFO**                      | Audio alerts for standing in bad stuff       | [CurseForge](https://legacy.curseforge.com/wow/addons/gtfo) / [WowAce](https://www.wowace.com/projects/gtfo)                                  |
+| **GearScoreLite**             | Lightweight gear scoring                     | [CurseForge](https://www.curseforge.com/wow/addons/gearscorelite) / [GitHub](https://github.com/Arcitec/GearScoreLite_Reborn)                 |
+| **Icecrown Citadel Journal**  | In-game boss tactics reminder for ICC        | [Warperia](https://warperia.com/addon-wotlk/icecrown-citadel-journal/)                                                                        |
+| **Overachiever**              | Achievement helper                           | [CurseForge](https://www.curseforge.com/wow/addons/overachiever) / [Warperia](https://warperia.com/addon-wotlk/overachiever/)                 |
+| **Postal**                    | Enhanced mail management                     | [CurseForge](https://www.curseforge.com/wow/addons/postal) / [Warperia](https://warperia.com/addon-wotlk/postal/)                             |
+| **Questie**                   | Quest helper and tracker                     | [CurseForge](https://legacy.curseforge.com/wow/addons/questie) / [GitHub](https://github.com/Questie/Questie)                                 |
+| **Rare Spawn Overlay**        | World map overlay for rare NPC locations     | [CurseForge](https://legacy.curseforge.com/wow/addons/rare-spawn-overlay) / [Warperia](https://warperia.com/addon-wotlk/rare-spawn-overlay/)  |
+| **SilverDragon**              | Rare mob alert and tracker                   | [CurseForge](https://legacy.curseforge.com/wow/addons/silver-dragon) / [WowAce](https://www.wowace.com/projects/silver-dragon)                |
+| **Skada**                     | Damage/healing meter                         | [CurseForge](https://www.curseforge.com/wow/addons/skada) / [Warperia](https://warperia.com/addon-wotlk/skada-revisited/)                     |
+| **Talented**                  | Talent tree editor                           | [CurseForge](https://legacy.curseforge.com/wow/addons/talented-classic) / [Warperia](https://warperia.com/addon-wotlk/talented/)              |
 
 *Note: Some addons may have multiple modules included (like AtlasLoot modules and DBM modules).*
 
